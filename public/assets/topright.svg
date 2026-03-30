@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="960"
+  height="1088"
+  viewBox="0 0 960 1088"
+  fill="none"
+>
+  <!-- Transparent canvas by default -->
+  <defs>
+    <linearGradient id="creamMain" x1="610" y1="40" x2="940" y2="980" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF4E6"/>
+      <stop offset="1" stop-color="#F6E6D2"/>
+    </linearGradient>
+    <linearGradient id="creamSoft" x1="640" y1="140" x2="910" y2="850" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF8EE" stop-opacity="0.96"/>
+      <stop offset="1" stop-color="#F0DFC8" stop-opacity="0.78"/>
+    </linearGradient>
+    <radialGradient id="faceGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(820 390) rotate(90) scale(360 250)">
+      <stop offset="0" stop-color="#FFEED8" stop-opacity="0.75"/>
+      <stop offset="1" stop-color="#FFEED8" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Cream fill only on the right/face side -->
+  <path
+    d="M690 24C760 10 836 42 886 92C948 154 970 249 957 337C945 417 905 494 861 561C827 612 811 662 807 721C803 782 816 840 839 902C855 946 881 987 920 1022C886 1056 828 1077 772 1084C710 1092 648 1078 596 1044C529 1001 480 927 468 848C456 772 480 702 535 645C576 602 607 554 620 501C633 447 628 390 607 337C581 270 565 202 582 137C595 87 632 41 690 24Z"
+    fill="url(#creamMain)"
+  />
+
+  <!-- Soft internal contour near face -->
+  <path
+    d="M744 86C786 82 828 101 857 132C900 178 919 242 913 304C905 381 868 450 832 508C801 558 777 614 771 672C765 730 775 790 795 850C807 886 826 922 855 953C825 975 787 986 749 985C697 983 648 958 612 918C569 870 552 800 561 734C570 665 604 604 645 551C676 511 700 466 709 419C718 371 711 321 691 275C671 230 661 184 669 141C675 112 698 91 744 86Z"
+    fill="url(#creamSoft)"
+    opacity="0.95"
+  />
+
+  <!-- Gentle glow around face side -->
+  <ellipse cx="820" cy="390" rx="250" ry="360" fill="url(#faceGlow)"/>
+</svg>
