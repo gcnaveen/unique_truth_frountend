@@ -132,9 +132,9 @@ const Talentawareness = () => {
         </section>
 
         {/* Hero Image Section */}
-        <section className="max-w-6xl mx-auto px-6 sm:px-8 py-12 sm:py-20 xl:max-w-440 xl:py-24">
+        <section className="max-w-6xl mx-auto px-6 sm:px-8 pt-12 pb-8 sm:pt-16 sm:pb-10 xl:max-w-440 xl:pt-20 xl:pb-12">
           <FadeUp>
-            <div className="relative group">
+            <div className="relative group mx-auto max-w-5xl">
               <div className="absolute -inset-1 bg-linear-to-r from-[#5eead4]/20 to-[#c9a86c]/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               <img
                 src="/assets/services/talent.png"
@@ -146,8 +146,8 @@ const Talentawareness = () => {
         </section>
 
         {/* Latent Success Path */}
-        <section className="max-w-6xl mx-auto px-6 sm:px-8 py-16 sm:py-24 xl:max-w-440 xl:py-28">
-          <FadeUp>
+        <section className="max-w-6xl mx-auto px-6 sm:px-8 pt-10 pb-16 sm:pt-12 sm:pb-24 xl:max-w-440 xl:pt-14 xl:pb-28">
+          {/* <FadeUp>
             <h2 className="font-display text-4xl sm:text-5xl font-light text-[#fff8ef] mb-4">
               Latent Success Path
             </h2>
@@ -157,49 +157,47 @@ const Talentawareness = () => {
                 background: "linear-gradient(90deg, #c9a86c 0%, #5eead4 100%)",
               }}
             />
-          </FadeUp>
+          </FadeUp> */}
 
           <div className="space-y-8">
-            {/* Main intro */}
-            <FadeUp delay={100}>
-              <div className="p-8 rounded-3xl border border-[#5eead4]/20 bg-linear-to-br from-[#5eead4]/5 via-transparent to-[#c9a86c]/5 backdrop-blur-sm">
-                <p className="text-lg leading-relaxed text-[rgba(255,248,236,0.85)] max-w-3xl">
-                  Top 3 skills out of 12 professional skills increase your
-                  performance, productivity and satisfaction without struggling
-                  and Stress.
-                </p>
-              </div>
-            </FadeUp>
-
-            {/* Four pillars */}
+            {/* Five pillars */}
             <div className="grid md:grid-cols-2 gap-6 mt-10 auto-rows-fr">
               {[
+                {
+                  title: "Latent Success Path",
+                  description:
+                    "Top 3 skills out of 12 professional skills increase your performance, productivity and satisfaction without struggling and Stress.",
+                  image:
+                    "/assets/services/talentawareness/Latentsuccesspath.png",
+                  accentColor: "from-[#5eead4]",
+                },
                 {
                   title: "4 Leadership Styles",
                   description:
                     "Every Leader is born for a reason with complete powers to empower the world and fulfil their deeper desires, purpose through their unique approaches and create leaders for the world's betterment.",
-                  icon: "🔹",
+                  image: "/assets/services/talentawareness/4leadership.png",
                   accentColor: "from-[#c9a86c]",
                 },
                 {
                   title: "5 Thinking and Perception",
                   description:
                     "The whole Psychology itself is all about 5 Thinkers in the world, We are pioneers in teaching about 5 thinkers' psychology, is the ultimate winning to convert every lead into business and grow effortlessly.",
-                  icon: "🔹",
+                  image: "/assets/services/talentawareness/5thinking.png",
                   accentColor: "from-[#5eead4]",
                 },
                 {
                   title: "Multiple Intelligence",
                   description:
                     "Inborn Dominant intelligence is the driving force for life to gain self-motivation without external support, to create a big contribution for the world.",
-                  icon: "🔹",
+                  image:
+                    "/assets/services/talentawareness/Multipleintelligence.png",
                   accentColor: "from-[#c9a86c]",
                 },
                 {
                   title: "Career Guidance",
                   description:
                     "Is the Road Map for an individual who has lots of confusion about what to study and choose as a career, with a star ratings from 1 to 5.",
-                  icon: "🔹",
+                  image: "/assets/services/talentawareness/Careerguidance.png",
                   accentColor: "from-[#5eead4]",
                 },
               ].map((pillar, idx) => (
@@ -207,15 +205,25 @@ const Talentawareness = () => {
                   <div
                     className={`group h-full p-8 rounded-2xl border border-white/10 bg-linear-to-br ${pillar.accentColor}/5 to-transparent backdrop-blur-sm hover:bg-white/8 hover:border-white/20 transition-all duration-500 hover:shadow-xl cursor-pointer`}
                   >
-                    <div className="flex items-start gap-4 mb-4">
-                      <span className="text-2xl">{pillar.icon}</span>
-                      <h3 className="font-display text-2xl font-light text-[#fff8ef] group-hover:text-[#c9a86c] transition-colors">
-                        {pillar.title}
-                      </h3>
+                    <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
+                      <div className="flex w-full shrink-0 items-center justify-center overflow-hidden rounded-xl sm:h-40 sm:w-40">
+                        <img
+                          src={pillar.image}
+                          alt={pillar.title}
+                          className="h-full w-full object-contain object-center"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-display text-2xl font-light text-[#fff8ef] group-hover:text-[#c9a86c] transition-colors">
+                          {pillar.title}
+                        </h3>
+                        <p className="mt-3 text-[0.95rem] leading-relaxed text-[rgba(255,248,236,0.7)] xl:text-[1rem]">
+                          {pillar.description}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-[0.95rem] leading-relaxed text-[rgba(255,248,236,0.7)] xl:text-[1rem]">
-                      {pillar.description}
-                    </p>
                   </div>
                 </FadeUp>
               ))}

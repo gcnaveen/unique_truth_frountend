@@ -135,7 +135,7 @@ const Relationshipawareness = () => {
         {/* Hero Image Section */}
         <section className="max-w-6xl mx-auto px-6 sm:px-8 py-12 sm:py-20 xl:max-w-440 xl:py-24">
           <FadeUp>
-            <div className="relative group">
+            <div className="relative group mx-auto max-w-5xl">
               <div className="absolute -inset-1 bg-linear-to-r from-[#5eead4]/20 to-[#c9a86c]/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               <img
                 src="/assets/services/relationship_new.png"
@@ -156,14 +156,15 @@ const Relationshipawareness = () => {
                   title: "Core Qualities",
                   description:
                     "The world has deeper myths behind why people don't RESPECT us. Usually, people think we made repeated mistakes or didn't listen to them; in turn, people don't respect us, NO!, the TRUTH is, using the top 3 Dominant Core Qualities out of 10 core qualities, then people naturally Respect us all the time. Because it creates the best difference in people's life.",
-                  icon: "🔹",
+                  image:
+                    "/assets/services/relationshipawareness/corequalities.png",
                   accentColor: "from-[#c9a86c]",
                 },
                 {
                   title: "IQ, EQ, AQ & CQ Quotients",
                   description:
                     "Where 2 individuals have different dominant quotients, there is a lack of coordination and support system at home or the workplace; they can't accept each other, and it leads to bigger conflicts in relationships. Being aware of Dominant Quotient complementing to explore their true potential.",
-                  icon: "🔹",
+                  image: "/assets/services/relationshipawareness/iqeq.png",
                   accentColor: "from-[#5eead4]",
                 },
               ].map((pillar, idx) => (
@@ -171,15 +172,25 @@ const Relationshipawareness = () => {
                   <div
                     className={`group h-full p-8 rounded-2xl border border-white/10 bg-linear-to-br ${pillar.accentColor}/5 to-transparent backdrop-blur-sm hover:bg-white/8 hover:border-white/20 transition-all duration-500 hover:shadow-xl cursor-pointer`}
                   >
-                    <div className="flex items-start gap-4 mb-4">
-                      <span className="text-2xl">{pillar.icon}</span>
-                      <h3 className="font-display text-2xl font-light text-[#fff8ef] group-hover:text-[#c9a86c] transition-colors">
-                        {pillar.title}
-                      </h3>
+                    <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
+                      <div className="flex w-full shrink-0 items-center justify-center overflow-hidden rounded-xl sm:h-40 sm:w-40">
+                        <img
+                          src={pillar.image}
+                          alt={pillar.title}
+                          className="h-full w-full object-contain object-center"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-display text-2xl font-light text-[#fff8ef] group-hover:text-[#c9a86c] transition-colors">
+                          {pillar.title}
+                        </h3>
+                        <p className="mt-3 text-[0.95rem] leading-relaxed text-[rgba(255,248,236,0.7)] xl:text-[1rem]">
+                          <BrandText text={pillar.description} />
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-[0.95rem] leading-relaxed text-[rgba(255,248,236,0.7)] xl:text-[1rem]">
-                      <BrandText text={pillar.description} />
-                    </p>
                   </div>
                 </FadeUp>
               ))}
@@ -192,14 +203,15 @@ const Relationshipawareness = () => {
                   title: "5 ways to Enhance EQ",
                   description:
                     "The world's first scientific approach to understand the deeper feelings of acceptance and rejection of love by understanding 5 Love Languages, Lack of love as per a person's Love Language is the root cause for Mood swings, Possessiveness, Anxiety, Autism, and over thinking. Awareness of love languages builds Safe, secure and confidence in a person.",
-                  icon: "🔹",
+                  image:
+                    "/assets/services/relationshipawareness/5waysto.png",
                   accentColor: "from-[#c9a86c]",
                 },
                 {
                   title: "SWOT Analysis",
                   description:
                     "Every individual is born only with Strengths (S), never born with weaknesses, weakness never existed. We need to be ready for Willing to work on (W) the areas to be developed, focus on Opportunities (O), and have to Take charge (T) of our inborn Personality to explore.",
-                  icon: "🔹",
+                  image: "/assets/services/relationshipawareness/swot.png",
                   accentColor: "from-[#5eead4]",
                 },
               ].map((pillar, idx) => (
@@ -207,19 +219,30 @@ const Relationshipawareness = () => {
                   <div
                     className={`group h-full p-8 rounded-2xl border border-white/10 bg-linear-to-br ${pillar.accentColor}/5 to-transparent backdrop-blur-sm hover:bg-white/8 hover:border-white/20 transition-all duration-500 hover:shadow-xl cursor-pointer`}
                   >
-                    <div className="flex items-start gap-4 mb-4">
-                      <span className="text-2xl">{pillar.icon}</span>
-                      <h3 className="font-display text-2xl font-light text-[#fff8ef] group-hover:text-[#c9a86c] transition-colors">
-                        {pillar.title}
-                      </h3>
+                    <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
+                      <div className="flex w-full shrink-0 items-center justify-center overflow-hidden rounded-xl sm:h-40 sm:w-40">
+                        <img
+                          src={pillar.image}
+                          alt={pillar.title}
+                          className="h-full w-full object-contain object-center"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-display text-2xl font-light text-[#fff8ef] group-hover:text-[#c9a86c] transition-colors">
+                          {pillar.title}
+                        </h3>
+                        <p className="mt-3 text-[0.95rem] leading-relaxed text-[rgba(255,248,236,0.7)]">
+                          <BrandText text={pillar.description} />
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-[0.95rem] leading-relaxed text-[rgba(255,248,236,0.7)]">
-                      <BrandText text={pillar.description} />
-                    </p>
                   </div>
                 </FadeUp>
               ))}
             </div>
+
           </div>
         </section>
 
@@ -231,28 +254,40 @@ const Relationshipawareness = () => {
                 title: "Permanent gains in your RELATIONSHIPS",
                 description:
                   "Understanding your and your family's psychology, Always feeling Happy in Self, Family and Social Relationships; Authentic Respect in Relationships; Supportive and Co-operative bonding; Experiencing constant love in you, Feels peace, Safe, Secure and Confident in a Harmonious Relationship.",
-                icon: "🔸",
+                image:
+                  "/assets/services/relationshipawareness/permanentgains.png",
                 accentColor: "#c9a86c",
               },
               {
                 title: "Source of Happiness",
                 description:
                   "People are suffering in life by forgetting the importance of Happiness as a goal. Happiness is a generic subject in the world, No! It is an individualistic Focus in Unique TRUTH.\n\nPeople experience happiness within Self, Family and Society.\n\nUnderstanding each family member's specific source of happiness and blind spots brings your worries to 0%.",
-                icon: "🔸",
+                image:
+                  "/assets/services/relationshipawareness/sourceofhappiness.png",
                 accentColor: "#5eead4",
               },
             ].map((item, idx) => (
               <FadeUp key={idx} delay={idx * 150}>
                 <div className="p-8 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm hover:bg-white/8 hover:border-white/20 transition-all duration-500 group">
-                  <div className="flex items-start gap-4 mb-4">
-                    <span className="text-2xl">{item.icon}</span>
-                    <h3 className="font-display text-2xl font-light text-[#fff8ef] group-hover:text-[#c9a86c] transition-colors">
-                      {item.title}
-                    </h3>
+                  <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
+                    <div className="flex w-full shrink-0 items-center justify-center overflow-hidden rounded-xl sm:h-44 sm:w-44">
+                      <img
+                        src={item.image}
+                        alt={item.title}
+                        className="h-full w-full object-contain object-center"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-display text-2xl font-light text-[#fff8ef] group-hover:text-[#c9a86c] transition-colors">
+                        {item.title}
+                      </h3>
+                      <p className="mt-3 text-[0.95rem] leading-relaxed text-[rgba(255,248,236,0.8)] group-hover:text-[rgba(255,248,236,0.95)] transition-colors whitespace-pre-line">
+                        <BrandText text={item.description} />
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-[0.95rem] leading-relaxed text-[rgba(255,248,236,0.8)] group-hover:text-[rgba(255,248,236,0.95)] transition-colors whitespace-pre-line">
-                    <BrandText text={item.description} />
-                  </p>
                 </div>
               </FadeUp>
             ))}

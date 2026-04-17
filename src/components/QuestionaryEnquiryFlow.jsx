@@ -146,7 +146,7 @@ export default function QuestionaryEnquiryFlow({
       className={`rounded-2xl border p-6 shadow-lg backdrop-blur-sm sm:p-8 ${cardClassName}`}
     >
       <h3 className="font-display text-2xl font-semibold text-[#0a1a12] sm:text-[1.65rem]">
-        Please answer the questions
+        We request you to answer the questions
       </h3>
       <p className="mt-2 text-base font-medium text-[#0f2e1a]/85">
         Answer one by one, then submit your enquiry details.

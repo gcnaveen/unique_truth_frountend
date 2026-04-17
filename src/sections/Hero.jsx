@@ -30,6 +30,17 @@ const HeroStyles = () => (
       box-shadow: 0 12px 40px rgba(201, 168, 108, 0.22);
       transform: translateY(-1px);
     }
+    .hero-login-btn {
+      box-shadow: 0 10px 30px rgba(201, 168, 108, 0.35);
+    }
+    .hero-login-btn:hover {
+      box-shadow: 0 14px 40px rgba(201, 168, 108, 0.5);
+    }
+    .hero-unique-script {
+      font-family: var(--font-pacifico), "Pacifico", "Segoe Script", cursive;
+      font-style: normal;
+      letter-spacing: 0.01em;
+    }
     .hero-cta-ghost {
       transition: background 0.25s, border-color 0.25s, color 0.25s;
     }
@@ -43,9 +54,9 @@ const HeroStyles = () => (
 const Hero = ({ onEnquireClick }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const stats = [
-    { value: "98%", label: "Accuracy" },
-    { value: "50K+", label: "Reports" },
-    { value: "12 Yrs", label: "Research" },
+    { value: "100%", label: "Accuracy" },
+    { value: "7K+", label: "Reports" },
+    { value: "13 Years+", label: "Research" },
   ];
   const navLinks = [
     { label: "Home", href: "#home" },
@@ -155,7 +166,7 @@ const Hero = ({ onEnquireClick }) => {
             </a>
 
             <nav
-              className="hidden items-center gap-8 lg:flex"
+              className="hidden items-center gap-8 lg:flex lg:-ml-10"
               aria-label="Primary"
             >
               {navLinks.map((l) => (
@@ -172,7 +183,7 @@ const Hero = ({ onEnquireClick }) => {
             <div className="flex items-center gap-2 sm:gap-2.5">
               <a
                 href="/login"
-                className="hero-cta-primary inline-flex items-center justify-center rounded-full border border-[#c9a86c]/55 bg-[#c9a86c] px-3 py-2 text-[0.68rem] font-semibold tracking-[0.1em] text-[#1a120c] no-underline shadow-[0_8px_28px_rgba(201,168,108,0.28)] sm:px-4 sm:text-[0.72rem]"
+                className="hero-cta-primary hero-login-btn inline-flex items-center justify-center rounded-full border border-[#f6dfb3] bg-[#e7c387] px-4 py-2 text-[0.75rem] font-bold tracking-[0.12em] text-[#1a120c] no-underline ring-1 ring-[#fff3d7]/40 sm:px-5 sm:py-2.5 sm:text-[0.8rem]"
               >
                 Login
               </a>
@@ -251,15 +262,15 @@ const Hero = ({ onEnquireClick }) => {
               </div>
 
               <span className="relative inline-flex items-center rounded-full border border-[#c9a86c]/25 bg-[#14381f]/60 px-5 py-2 text-[0.62rem] font-semibold uppercase tracking-[0.32em] text-[#c9a86c] shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset] backdrop-blur-sm">
-                Fingerprint Intelligence
+                Fingerprint Analysis
               </span>
 
               <h1 className="font-display relative mt-6 text-[clamp(2.75rem,6.2vw,5rem)] font-light leading-[1.05] tracking-[-0.02em] text-[#fff8ef] 2xl:text-[clamp(3.25rem,5.4vw,6rem)]">
                 <span className="block sm:inline">Reveals Your</span>
                 <span className="block sm:ml-2">
-                  <em className="italic text-[#c9a86c]">
+                  <span className="hero-unique-script text-[#c9a86c]">
                     <BrandText text="Unique" />
-                  </em>{" "}
+                  </span>{" "}
                   Nature
                 </span>
               </h1>

@@ -197,7 +197,7 @@ const Footer = () => {
                       Phone
                     </span>
                     <span className="mt-0.5 block text-[0.92rem] text-[#fff8ef] transition-colors group-hover:text-[#c9a86c]">
-                      +91 63637 86869
+                      +91 96637 69899
                     </span>
                   </span>
                 </a>

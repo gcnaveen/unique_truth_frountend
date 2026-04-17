@@ -141,7 +141,7 @@ const Contactus = () => {
               Give Us a Call
             </h3>
             <p className="mt-1 text-[0.72rem] leading-normal text-[rgba(255,248,236,0.56)]">
-              +91 63637 86869
+              +91 96637 69899
             </p>
           </div>
 

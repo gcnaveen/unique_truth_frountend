@@ -430,9 +430,9 @@ const StarIllustration = () => (
 
 /* ─── Data ───────────────────────────────────────────────────────────── */
 const stats = [
-  { value: 5000, suffix: "+", label: "Lives Transformed" },
-  { value: 12, suffix: "+", label: "Years of Research" },
-  { value: 98, suffix: "%", label: "Client Satisfaction" },
+  { value: 7200, suffix: "+", label: "Lives Transformed" },
+  { value: 13, suffix: "+", label: "Years of Research" },
+  { value: 100, suffix: "%", label: "Client Satisfaction" },
   { value: 50, suffix: "+", label: "Expert Consultants" },
 ];
 
@@ -606,7 +606,7 @@ export default function Aboutus() {
               {
                 tag: "UNIQUE TRUTH VISION",
                 heading: "Helping everyone to realise their unique natures",
-                body: "Helping everyone to realise their unique natures through Fingerprint Analysis to dispel all upsets, confusions, myths, doubts, stress, worries, fears and anxiety.",
+                body: "Helping everyone to realise their unique natures through Fingerprint Analysis to dispel all upsets, confusions, myths, doubts, stress, worries, fears and insecurities.",
                 accent: "#c9a86c",
                 icon: (
                   <svg

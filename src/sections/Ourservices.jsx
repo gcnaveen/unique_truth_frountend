@@ -386,10 +386,9 @@ const services = [
     num: "01",
     title: "Skills Behind Studies",
     short:
-      "Discover the hidden cognitive abilities and learning styles that power academic success — beyond grades and textbooks.",
+      "World's first proven scientific approach to find a child's specific learning method to learn anything stress free and develop Concentration, Comprehension, and long-term memory.",
     desc: "Every student's brain is wired differently. We decode your unique learning mechanism, study patterns, and cognitive strengths — helping you study smarter, retain more, and perform with confidence.",
-    Icon: IconSkills,
-    tag: "Academic Clarity",
+    image: "/assets/services/skillsbehindstudies/skillsbehindstud.png",
     accentFrom: "#5eead4",
     accentTo: "#22c55e",
   },
@@ -399,8 +398,7 @@ const services = [
     short:
       "Understand why you think, react, and decide the way you do — and transform your patterns for lasting growth.",
     desc: "Behaviour is the language of the subconscious. Through deep analysis of your behavioural tendencies, triggers, and thought cycles, we help you shift from unconscious patterns to intentional living.",
-    Icon: IconBehaviour,
-    tag: "Inner Patterns",
+    image: "/assets/services/behavioralawareness/Behavioralawareness.png",
     accentFrom: "#c9a86c",
     accentTo: "#e8d5b5",
   },
@@ -410,8 +408,7 @@ const services = [
     short:
       "Uncover your relational blueprints, love languages, and connection styles for deeper, healthier bonds.",
     desc: "Every relationship mirrors a part of you. We help you understand how you attach, communicate, and love — enabling you to build fulfilling relationships with family, partners, and colleagues alike.",
-    Icon: IconRelationship,
-    tag: "Deeper Bonds",
+    image: "/assets/services/relationshipawareness/benifitsofr.png",
     accentFrom: "#5eead4",
     accentTo: "#c9a86c",
   },
@@ -421,8 +418,7 @@ const services = [
     short:
       "Reveal the innate gifts and natural abilities you were born with — and align your life's path with your truest potential.",
     desc: "Talent is not learned — it is uncovered. Using fingerprint intelligence and brain profiling, we identify your core natural gifts so you can choose careers, passions, and paths that feel effortless and fulfilling.",
-    Icon: IconTalent,
-    tag: "Natural Gifts",
+    image: "/assets/services/talentawareness/benifits2.png",
     accentFrom: "#c9a86c",
     accentTo: "#5eead4",
   },
@@ -437,7 +433,7 @@ const ServiceModal = ({ service, onClose }) => {
   }, [onClose]);
 
   if (!service) return null;
-  const { title, desc, tag, Icon, accentFrom } = service;
+  const { title, desc, image, accentFrom } = service;
 
   return (
     <div
@@ -463,16 +459,16 @@ const ServiceModal = ({ service, onClose }) => {
         />
 
         <div className="flex items-start gap-4 mb-6">
-          <div className="w-14 h-14 shrink-0 rounded-2xl border border-white/8 bg-[#14381f]/80 flex items-center justify-center p-2.5">
-            <Icon />
+          <div className="w-20 h-20 shrink-0 rounded-2xl border border-white/8 bg-[#14381f]/80 flex items-center justify-center p-1.5 overflow-hidden">
+            <img
+              src={image}
+              alt={title}
+              className="h-full w-full object-contain rounded-xl"
+              loading="lazy"
+              decoding="async"
+            />
           </div>
           <div>
-            <p
-              className="text-[0.58rem] font-semibold uppercase tracking-[0.38em] mb-1"
-              style={{ color: accentFrom }}
-            >
-              {tag}
-            </p>
             <h4 className="font-display text-[1.35rem] font-light text-[#fff8ef]">
               {title}
             </h4>
@@ -690,8 +686,14 @@ export default function Ourservices() {
                   {/* Top row */}
                   <div className="flex items-start justify-between mb-6">
                     {/* Icon */}
-                    <div className="srv-icon-ring flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-white/8 bg-[#0F2E15]/60 p-2.5">
-                      <svc.Icon />
+                    <div className="srv-icon-ring flex h-30 w-30 shrink-0 items-center justify-center rounded-2xl border border-white/8 bg-[#0F2E15]/60 p-1.5 overflow-hidden">
+                      <img
+                        src={svc.image}
+                        alt={svc.title}
+                        className="h-full w-full object-contain rounded-xl"
+                        loading="lazy"
+                        decoding="async"
+                      />
                     </div>
 
                     {/* Number + arrow */}
@@ -715,20 +717,8 @@ export default function Ourservices() {
                     </div>
                   </div>
 
-                  {/* Tag pill */}
-                  <span
-                    className="mb-3 inline-block rounded-full border px-3 py-1 text-[0.58rem] font-semibold uppercase tracking-[0.3em]"
-                    style={{
-                      borderColor: `${svc.accentFrom}35`,
-                      color: `${svc.accentFrom}`,
-                      background: `${svc.accentFrom}09`,
-                    }}
-                  >
-                    {svc.tag}
-                  </span>
-
                   {/* Title */}
-                  <h3 className="font-display text-[1.25rem] sm:text-[1.38rem] font-light leading-snug text-[#fff8ef] mb-3 xl:text-[1.55rem]">
+                  <h3 className="font-display text-[1.25rem] sm:text-[1.38rem] font-light leading-snug text-[#fff8ef] mb-4 xl:text-[1.55rem]">
                     {svc.title}
                   </h3>
 

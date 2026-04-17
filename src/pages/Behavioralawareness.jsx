@@ -145,7 +145,7 @@ const Behavioralawareness = () => {
         {/* Hero Image Section */}
         <section className="max-w-6xl mx-auto px-6 sm:px-8 py-12 sm:py-20">
           <FadeUp>
-            <div className="relative group">
+            <div className="relative group mx-auto max-w-5xl">
               <div className="absolute -inset-1 bg-gradient-to-r from-[#5eead4]/20 to-[#c9a86c]/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               <img
                 src="/assets/services/BehavioralAwareness.png"
@@ -166,28 +166,31 @@ const Behavioralawareness = () => {
                   title: "Inborn personality & Behaviour",
                   description:
                     "Personality reveals person's thoughts, feelings, behaviour and it helps to know how to build right Self Image and high Self Esteem.",
-                  icon: "🔹",
+                  image:
+                    "/assets/services/behavioralawareness/Inbornpersonality &Behaviour.png",
                   accentColor: "from-[#c9a86c]",
                 },
                 {
                   title: "5 ways to Increase IQ",
                   description:
                     "Brain expects a very specific way of informations to understand, analyse, process, plan and execute. This approach increases the performance.",
-                  icon: "🔹",
+                  image: "/assets/services/behavioralawareness/5ways.png",
                   accentColor: "from-[#5eead4]",
                 },
                 {
                   title: "Brain Dominance",
                   description:
                     "Gives complete insight and clarity about both the logical and emotional brain's nature.",
-                  icon: "🔹",
+                  image:
+                    "/assets/services/behavioralawareness/Braindominance.png",
                   accentColor: "from-[#c9a86c]",
                 },
                 {
                   title: "Favorite Hobbies",
                   description:
                     "Tells you about inborn interested fields which makes stress-free life, generate creative & innovative ideas for one's growth.",
-                  icon: "🔹",
+                  image:
+                    "/assets/services/behavioralawareness/Favoritehobbies.png",
                   accentColor: "from-[#5eead4]",
                 },
               ].map((pillar, idx) => (
@@ -195,15 +198,25 @@ const Behavioralawareness = () => {
                   <div
                     className={`group h-full p-8 rounded-2xl border border-white/10 bg-gradient-to-br ${pillar.accentColor}/5 to-transparent backdrop-blur-sm hover:bg-white/8 hover:border-white/20 transition-all duration-500 hover:shadow-xl cursor-pointer`}
                   >
-                    <div className="flex items-start gap-4 mb-4">
-                      <span className="text-2xl">{pillar.icon}</span>
-                      <h3 className="font-display text-2xl font-light text-[#fff8ef] group-hover:text-[#c9a86c] transition-colors">
-                        {pillar.title}
-                      </h3>
+                    <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
+                      <div className="flex w-full shrink-0 items-center justify-center overflow-hidden rounded-xl sm:h-40 sm:w-40">
+                        <img
+                          src={pillar.image}
+                          alt={pillar.title}
+                          className="h-full w-full object-contain object-center"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-display text-2xl font-light text-[#fff8ef] group-hover:text-[#c9a86c] transition-colors">
+                          {pillar.title}
+                        </h3>
+                        <p className="mt-3 text-[0.95rem] leading-relaxed text-[rgba(255,248,236,0.7)]">
+                          {pillar.description}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-[0.95rem] leading-relaxed text-[rgba(255,248,236,0.7)]">
-                      {pillar.description}
-                    </p>
                   </div>
                 </FadeUp>
               ))}
