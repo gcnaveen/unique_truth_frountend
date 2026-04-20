@@ -229,8 +229,7 @@ const Footer = () => {
                     Studio
                   </span>
                   <span className="mt-1 block max-w-xs text-[0.82rem] leading-[1.65] text-[rgba(255,248,236,0.55)]">
-                    5820/37th Main Road, Manand Main Rd, Bharath Nagar, 2nd
-                    Stage, Bengaluru, Karnataka 560091
+                  97/E, 16th Main Rd, SBI Staff Colony, Hoshalli Extension, Stage 1, Vijayanagar, Bengaluru, Karnataka 560040
                   </span>
                 </span>
               </li>

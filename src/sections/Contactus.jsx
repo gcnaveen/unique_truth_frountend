@@ -80,8 +80,9 @@ const Contactus = () => {
 
   const mapsSrc = useMemo(() => {
     // Public embed URL (no API key needed).
-    return "https://www.google.com/maps?q=5820%2F37th%20Main%20Road%2C%20Manand%20Main%20Rd%2C%20Bharath%20Nagar%2C%202nd%20Stage%2C%20Bengaluru%2C%20Karnataka%20560091&output=embed";
+    return "https://www.google.com/maps?q=97%2FE%2C%2016th%20Main%20Rd%2C%20SBI%20Staff%20Colony%2C%20Hoshalli%20Extension%2C%20Stage%201%2C%20Vijayanagar%2C%20Bengaluru%2C%20Karnataka%20560040&output=embed";
   }, []);
+  const mapsUrl = "https://share.google/Kcx9rCxmSbXrlK5RO";
 
   const onChange = (key) => (e) => {
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
@@ -169,11 +170,11 @@ const Contactus = () => {
               Visit Our Office
             </h3>
             <p className="mt-1 text-[0.68rem] leading-normal text-[rgba(255,248,236,0.56)]">
-              5820/37th Main Road, Manand Main Rd,
+              97/E, 16th Main Rd, SBI Staff Colony,
               <br />
-              Bharath Nagar, 2nd Stage, Bengaluru,
+              Hoshalli Extension, Stage 1,
               <br />
-              Karnataka 560091
+              Vijayanagar, Bengaluru, Karnataka 560040
             </p>
           </div>
         </div>
@@ -189,9 +190,17 @@ const Contactus = () => {
                 </span>
                 <div className="text-[0.58rem] font-semibold leading-[1.2]">
                   <div>Bengaluru</div>
-                  <div>Karnataka 560091</div>
+                  <div>Karnataka 560040</div>
                 </div>
               </div>
+              <a
+                href={mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-1 inline-block text-[0.58rem] font-semibold text-[#c9a86c] underline underline-offset-2 transition-colors hover:text-[#dfbf89]"
+              >
+                Open in Google Maps
+              </a>
             </div>
 
             <iframe
