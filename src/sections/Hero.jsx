@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import BrandText from "../components/BrandText";
+import LogoBlink, { HERO_BLINK_SPOTS } from "../components/Logoblink";
 
 const HeroStyles = () => (
   <style>{`
@@ -82,6 +83,7 @@ const Hero = ({ onEnquireClick }) => {
       >
         {/* Plain base + premium accents; decorative layer stays under the corner art */}
         <div className="pointer-events-none absolute inset-0 z-[1] overflow-hidden">
+          <LogoBlink spots={HERO_BLINK_SPOTS} />
           <div className="absolute -left-40 top-20 h-96 w-96 rounded-full bg-teal-400/6 blur-[110px]" />
           <div className="absolute -right-28 top-32 h-[28rem] w-[28rem] rounded-full bg-[#c9a86c]/6 blur-[130px]" />
           <div className="absolute bottom-20 left-1/3 h-80 w-80 rounded-full bg-emerald-500/5 blur-[100px]" />

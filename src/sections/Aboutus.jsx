@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import FirefliesBackground from "../components/threejsanimations/Firefliesbackground";
 import BrandText from "../components/BrandText";
+import LogoBlink, { ABOUT_BLINK_SPOTS } from "../components/Logoblink";
 
 /* ─── Google Fonts ───────────────────────────────────────────────────── */
 const GlobalStyles = () => (
@@ -477,6 +478,7 @@ export default function Aboutus() {
         </div> */}
         {/* ── Ambient glows ── */}
         <div className="pointer-events-none absolute inset-0 z-1 overflow-hidden">
+          <LogoBlink spots={ABOUT_BLINK_SPOTS} />
           <div className="absolute -left-40 top-16 h-96 w-96 rounded-full bg-teal-400/5 blur-[110px]" />
           <div className="absolute -right-24 top-72 h-[28rem] w-[28rem] rounded-full bg-[#c9a86c]/5 blur-[130px]" />
           <div className="absolute bottom-48 left-1/3 h-80 w-80 rounded-full bg-emerald-500/4 blur-[100px]" />

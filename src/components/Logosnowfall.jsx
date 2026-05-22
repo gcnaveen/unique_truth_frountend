@@ -29,11 +29,11 @@ const FallingLogos = ({ src }) => (
     }}
   >
     <style>{`
-      @keyframes logoFall {
-        0%   { transform: translateY(-130px) rotate(var(--r)); opacity: 0; }
+      @keyframes logoRise {
+        0%   { transform: translateY(110vh) rotate(var(--r)); opacity: 0; }
         8%   { opacity: var(--op); }
         92%  { opacity: var(--op); }
-        100% { transform: translateY(110vh) rotate(var(--r)); opacity: 0; }
+        100% { transform: translateY(-130px) rotate(var(--r)); opacity: 0; }
       }
     `}</style>
 
@@ -50,7 +50,7 @@ const FallingLogos = ({ src }) => (
           width: `${f.size}px`,
           height: `${f.size}px`,
           objectFit: "contain",
-          animation: `logoFall ${f.duration}s linear ${f.delay}s infinite backwards`,
+          animation: `logoRise ${f.duration}s linear ${f.delay}s infinite backwards`,
           "--r": `${f.rotate}deg`,
           "--op": f.opacity,
           willChange: "transform, opacity",

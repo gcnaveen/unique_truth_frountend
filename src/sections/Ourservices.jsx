@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import ButterflyBackground from "../components/threejsanimations/Butterflybackground";
 import BrandText from "../components/BrandText";
+import LogoBlink from "../components/Logoblink";
 
 /* ─── Shared styles (include once globally if already loaded) ────────── */
 const GlobalStyles = () => (
@@ -530,8 +530,8 @@ export default function Ourservices() {
         id="services"
         className="font-body relative overflow-hidden bg-[#0F2E15]"
       >
-        {/* <div className="pointer-events-none absolute inset-0 z-0 opacity-70">
-          <ButterflyBackground />
+        {/* <div className="pointer-events-none absolute inset-0 z-0">
+          <LogoBlink />
         </div> */}
         {/* ── Ambient glows ── */}
         <div className="pointer-events-none absolute inset-0 z-1 overflow-hidden">
