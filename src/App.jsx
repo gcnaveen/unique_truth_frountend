@@ -14,6 +14,7 @@ import AddQuestions from "./admin/pages/questionaries/AddQuestions";
 import EditQuestions from "./admin/pages/questionaries/EditQuestions";
 import Enquiries from "./admin/pages/enquire/Enquiries";
 import UserHome from "./user/UserHome";
+import LogoSnowfall from "./components/Logosnowfall";
 
 const roleMatches = (actualRole, expectedRole) =>
   String(actualRole || "").toLowerCase() === String(expectedRole || "").toLowerCase();
@@ -85,6 +86,7 @@ const App = () => {
 
   return (
     <>
+      <LogoSnowfall />
       <ScrollToTop />
       <Routes>
         <Route path="/" element={<Homepage />} />

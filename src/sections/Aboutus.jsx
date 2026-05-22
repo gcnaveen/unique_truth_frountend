@@ -472,9 +472,9 @@ export default function Aboutus() {
         id="about"
         className="font-body relative overflow-hidden bg-[#0F2E15]"
       >
-        <div className="pointer-events-none absolute inset-0 z-0 opacity-70">
+        {/* <div className="pointer-events-none absolute inset-0 z-0 opacity-70">
           <FirefliesBackground />
-        </div>
+        </div> */}
         {/* ── Ambient glows ── */}
         <div className="pointer-events-none absolute inset-0 z-1 overflow-hidden">
           <div className="absolute -left-40 top-16 h-96 w-96 rounded-full bg-teal-400/5 blur-[110px]" />
