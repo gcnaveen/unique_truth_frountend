@@ -472,9 +472,9 @@ export default function Aboutus() {
         id="about"
         className="font-body relative overflow-hidden bg-[#0F2E15]"
       >
-        <div className="pointer-events-none absolute inset-0 z-0 opacity-70">
+        {/* <div className="pointer-events-none absolute inset-0 z-0 opacity-70">
           <FirefliesBackground />
-        </div>
+        </div> */}
         {/* ── Ambient glows ── */}
         <div className="pointer-events-none absolute inset-0 z-1 overflow-hidden">
           <div className="absolute -left-40 top-16 h-96 w-96 rounded-full bg-teal-400/5 blur-[110px]" />
@@ -601,7 +601,7 @@ export default function Aboutus() {
           {/* ══════════════════════════════
               VISION & MISSION
           ══════════════════════════════ */}
-          <div className="mb-20 sm:mb-28 grid gap-4 sm:gap-5 md:grid-cols-2 xl:gap-6">
+          <div className="grid gap-4 sm:gap-5 md:grid-cols-2 xl:gap-6">
             {[
               {
                 tag: "UNIQUE TRUTH VISION",
@@ -749,7 +749,7 @@ export default function Aboutus() {
           {/* ══════════════════════════════
               CTA STRIP
           ══════════════════════════════ */}
-          <FadeUp>
+          {/* <FadeUp>
             <div className="relative overflow-hidden rounded-3xl border border-white/8 bg-gradient-to-br from-[#1a4528]/80 to-[#0a2410]/80 px-7 py-11 sm:px-14 sm:py-16 text-center backdrop-blur-sm">
               <div
                 className="pointer-events-none absolute inset-0"
@@ -779,7 +779,7 @@ export default function Aboutus() {
                 </svg>
               </button>
             </div>
-          </FadeUp>
+          </FadeUp> */}
         </div>
 
         {/* ── Back to top ── */}

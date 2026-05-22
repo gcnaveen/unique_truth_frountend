@@ -48,7 +48,7 @@ const Growthsection = () => {
               className="text-[clamp(2.05rem,4.2vw,3.35rem)] font-light leading-[1.14] tracking-[-0.012em] text-[#fff8ef] 2xl:text-[clamp(2.5rem,3.9vw,4.1rem)]"
               style={{ fontFamily: "var(--font-cormorant-garamond), serif" }}
             >
-              Let's Reveal Individualistic Psycology{" "}
+              Let's Reveal Individualistic Psychology{" "}
               <em className="italic text-[#c9a86c]">through fingertips.</em>
             </h2>
 

@@ -530,9 +530,9 @@ export default function Ourservices() {
         id="services"
         className="font-body relative overflow-hidden bg-[#0F2E15]"
       >
-        <div className="pointer-events-none absolute inset-0 z-0 opacity-70">
+        {/* <div className="pointer-events-none absolute inset-0 z-0 opacity-70">
           <ButterflyBackground />
-        </div>
+        </div> */}
         {/* ── Ambient glows ── */}
         <div className="pointer-events-none absolute inset-0 z-1 overflow-hidden">
           <div className="absolute -right-40 top-10 h-[28rem] w-[28rem] rounded-full bg-[#c9a86c]/5 blur-[130px]" />
@@ -654,7 +654,7 @@ export default function Ourservices() {
           {/* ══════════════════════════════
               SERVICE CARDS — 2×2 GRID
           ══════════════════════════════ */}
-          <div className="grid gap-4 sm:gap-5 sm:grid-cols-2 mb-16 sm:mb-20 xl:gap-6">
+          <div className="grid gap-4 sm:gap-5 sm:grid-cols-2 xl:gap-6">
             {services.map((svc, i) => (
               <FadeUp key={i} delay={i * 80}>
                 <div
@@ -766,7 +766,7 @@ export default function Ourservices() {
           {/* ══════════════════════════════
               BOTTOM ACCENT ROW
           ══════════════════════════════ */}
-          <FadeUp>
+          {/* <FadeUp>
             <div className="relative overflow-hidden rounded-3xl border border-white/8 bg-gradient-to-br from-[#1a4528]/80 to-[#0a2410]/80 px-7 py-10 sm:px-14 sm:py-12 backdrop-blur-sm">
               <div
                 className="pointer-events-none absolute inset-0"
@@ -791,7 +791,7 @@ export default function Ourservices() {
                 </button>
               </div>
             </div>
-          </FadeUp>
+          </FadeUp> */}
         </div>
 
         {/* ── Modal ── */}

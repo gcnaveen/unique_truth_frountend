@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { QuestionaryService } from "../api/questionaries";
 import QuestionaryEnquiryFlow from "../components/QuestionaryEnquiryFlow";
+import ServiceJourneyCtaButton, {
+  SERVICE_ENQUIRY_ANCHOR_ID,
+} from "../components/ServiceJourneyCtaButton";
 
 const useInView = (threshold = 0.1) => {
   const ref = useRef(null);
@@ -84,7 +87,7 @@ const Behavioralawareness = () => {
               </svg>
               Back
             </button>
-            <div className="text-xs font-semibold uppercase tracking-[0.2em] text-[#5eead4]">
+            <div className="font-service-truth-header text-[0.65rem] uppercase tracking-[0.16em] text-[#fff8ef] sm:text-xs">
               Behavioral Awareness
             </div>
           </div>
@@ -99,14 +102,16 @@ const Behavioralawareness = () => {
             </h1>
           </FadeUp>
 
-          <FadeUp delay={120} className="mb-10">
-            <QuestionaryEnquiryFlow
-              service={QuestionaryService.BEHAVIORAL_AWARENESS}
-              interstitialBeforeEnquiry={
-                "Would you love to experience your child's best behaviour by providing right environment as per their inborn natures. You are aware that building confidence in every aspect leads to best behaviour. Let's book an appointment with our Unique TRUTH experts."
-              }
-            />
-          </FadeUp>
+          <div id={SERVICE_ENQUIRY_ANCHOR_ID} className="scroll-mt-28 mb-10">
+            <FadeUp delay={120}>
+              <QuestionaryEnquiryFlow
+                service={QuestionaryService.BEHAVIORAL_AWARENESS}
+                interstitialBeforeEnquiry={
+                  "Would you love to experience your child's best behaviour by providing right environment as per their inborn natures. You are aware that building confidence in every aspect leads to best behaviour. Let's book an appointment with our Unique TRUTH experts."
+                }
+              />
+            </FadeUp>
+          </div>
 
           {/* Benefits grid */}
           <div className="grid md:grid-cols-2 gap-6 mt-12 auto-rows-fr">
@@ -119,19 +124,14 @@ const Behavioralawareness = () => {
               <FadeUp key={idx} delay={idx * 100}>
                 <div className="group h-full p-6 rounded-2xl border border-white/10 bg-white/3 backdrop-blur-sm hover:bg-white/8 transition-all duration-500 hover:border-[#c9a86c]/30 hover:shadow-lg hover:shadow-amber-600/10">
                   <div className="flex items-start gap-4">
-                    <div className="w-6 h-6 mt-1 shrink-0 rounded-full bg-gradient-to-br from-[#5eead4] to-[#c9a86c] flex items-center justify-center">
-                      <svg
-                        className="w-3 h-3 text-[#0f2e1a]"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </div>
+                    <img
+                      src="/assets/Fingerprint.png"
+                      alt=""
+                      className="h-7 w-7 mt-0.5 shrink-0 object-contain"
+                      width={28}
+                      height={28}
+                      aria-hidden
+                    />
                     <p className="text-[0.95rem] leading-relaxed text-[rgba(255,248,236,0.75)]">
                       {benefit}
                     </p>
@@ -263,9 +263,9 @@ const Behavioralawareness = () => {
                   Discover how understanding your behavioral patterns can
                   transform your relationships and personal growth journey.
                 </p>
-                <button className="inline-block px-8 py-4 rounded-full bg-gradient-to-r from-[#c9a86c] to-[#5eead4] text-[#0f2e1a] font-semibold text-sm uppercase tracking-[0.15em] hover:shadow-xl hover:shadow-amber-600/40 transition-all duration-300 hover:scale-105 cursor-pointer">
+                <ServiceJourneyCtaButton hasEnquiryFlow>
                   Start Your Journey
-                </button>
+                </ServiceJourneyCtaButton>
               </div>
             </div>
           </FadeUp>

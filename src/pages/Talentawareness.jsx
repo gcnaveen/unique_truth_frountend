@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import ServiceJourneyCtaButton from "../components/ServiceJourneyCtaButton";
 
 const useInView = (threshold = 0.1) => {
   const ref = useRef(null);
@@ -82,7 +83,7 @@ const Talentawareness = () => {
               </svg>
               Back
             </button>
-            <div className="text-xs font-semibold uppercase tracking-[0.2em] text-[#5eead4]">
+            <div className="font-service-truth-header text-[0.65rem] uppercase tracking-[0.16em] text-[#fff8ef] sm:text-xs">
               Talent Awareness
             </div>
           </div>
@@ -108,19 +109,14 @@ const Talentawareness = () => {
               <FadeUp key={idx} delay={idx * 100}>
                 <div className="group h-full p-6 rounded-2xl border border-white/10 bg-white/3 backdrop-blur-sm hover:bg-white/8 transition-all duration-500 hover:border-[#c9a86c]/30 hover:shadow-lg hover:shadow-amber-600/10">
                   <div className="flex items-start gap-4">
-                    <div className="w-6 h-6 mt-1 shrink-0 rounded-full bg-linear-to-br from-[#5eead4] to-[#c9a86c] flex items-center justify-center">
-                      <svg
-                        className="w-3 h-3 text-[#0f2e1a]"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </div>
+                    <img
+                      src="/assets/Fingerprint.png"
+                      alt=""
+                      className="h-7 w-7 mt-0.5 shrink-0 object-contain"
+                      width={28}
+                      height={28}
+                      aria-hidden
+                    />
                     <p className="text-[0.95rem] leading-relaxed text-[rgba(255,248,236,0.75)]">
                       {benefit}
                     </p>
@@ -277,9 +273,9 @@ const Talentawareness = () => {
                   Begin your Talent Awareness journey today and unlock the
                   natural gifts that will guide your path to success.
                 </p>
-                <button className="inline-block px-8 py-4 rounded-full bg-linear-to-r from-[#c9a86c] to-[#5eead4] text-[#0f2e1a] font-semibold text-sm uppercase tracking-[0.15em] hover:shadow-xl hover:shadow-amber-600/40 transition-all duration-300 hover:scale-105 cursor-pointer">
+                <ServiceJourneyCtaButton hasEnquiryFlow={false}>
                   Start Your Journey
-                </button>
+                </ServiceJourneyCtaButton>
               </div>
             </div>
           </FadeUp>

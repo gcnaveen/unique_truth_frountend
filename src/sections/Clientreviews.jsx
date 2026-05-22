@@ -4,45 +4,66 @@ import { motion, AnimatePresence } from "framer-motion";
 const REVIEWS = [
   {
     id: 0,
-    name: "Daniel Lariton",
-    role: "Business Strategist",
+    name: "Basavaraju S",
+    role: "Technical Lead, Sightspectrum Technology Solutions Private Limited, Bangalore",
     stars: 5,
-    text: "The fingerprint report unveiled dimensions of my personality I had never consciously acknowledged. It gave me a precise language to describe my natural strengths. My decisions have never been clearer or more aligned with who I truly am.",
+    text: "Found about this through Rapid Rashmi YouTube Podcast. I work in tech. Professional with 8+ years of experience. I recently got my fingerprint analysis and DMIT report done through Dr. Muruli, and honestly, it was way more insightful than I expected. The report itself was detailed, but what made the real difference was how he explained it. He did not just read out the data, he actually connected it to real-life situations I could relate to. He spoke about how certain traits of mine would play out in work, learning, or even handling stress, and gave practical suggestions on what to do in those moments. It felt like talking to someone who genuinely understands how people think and behave. Not once did it feel like a scripted consultation. I walked away with more clarity on how I naturally operate, what I should lean into more, and what areas I can consciously work on. If you are someone who is curious about your own potential or just looking for direction, I definitely recommend giving this a try.",
   },
   {
     id: 1,
-    name: "Sarah Mitchell",
-    role: "Life Coach",
+    name: "Mahesh Hulivana Manchegowda",
+    role: "One Health LLC, Project Manager, UAE",
     stars: 5,
-    text: "As a life coach I have encountered many assessment tools, but nothing approaches the depth and accuracy of this analysis. It helped me understand my clients in ways that would otherwise have taken years of careful observation to uncover.",
+    text: "As a UAE resident, my weekends are usually a mix of relaxation and catching up on content that adds value to my life. Recently, while watching a podcast by Rapid Rashmi featuring Dr. Muruli, I came across a fascinating concept: fingerprint analysis, but not in the way most of us know it. We often associate fingerprint analysis with forensic investigations, biometric security, background checks, or even identification of the deceased. But what truly caught my attention was the lesser-known side of this science: understanding your inborn personality traits through your fingerprints. You could call it a SWOT analysis of a person, discovered at birth. Despite being over 50, I decided to undergo my own fingerprint personality analysis, and the results were eye-opening. Unlike astrology, numerology, or other predictive sciences, this method is rooted in neuroscience and behavioral studies. It does not tell you your future, it tells you the truth of who you are, your natural strengths, challenges, learning styles, and potential. And it does so with stunning accuracy. After watching the entire 140-minute episode in one sitting, I walked away not only with a better understanding of myself, but with a deep sense of clarity on how I can better align my efforts with my inborn qualities. It was genuinely life-enriching. I now strongly believe that fingerprint analysis is something every family should consider doing, to understand each other better, to communicate more effectively, and to truly support each other's growth.",
   },
   {
     id: 2,
-    name: "Priya Sharma",
-    role: "Career Consultant",
+    name: "Ranganatha Naykar",
+    role: "Managing Director, Nutriplanet Foods Private Limited",
     stars: 5,
-    text: "I was initially skeptical, but the report resonated so profoundly with my lived experience. It articulated character patterns I had intuitively sensed but never been able to express. The precision and care in this work is truly exceptional.",
+    text: "Thank you Unique Truth. I never knew something like this existed. Very happy to be associated with you and your team. Thank you for letting us know our uniqueness and giving specific and to-the-dot examples and also helping us to explore as individuals and family as well. I look forward to the continuous learning and exploring sessions.",
   },
   {
     id: 3,
-    name: "James Crawford",
-    role: "Entrepreneur",
+    name: "Reena Gagan",
+    role: "Founder, Aditi Little Feats Kindergarden, Coorg",
     stars: 5,
-    text: "Understanding my innate talents completely transformed how I approach my business. I stopped fighting my natural blueprint and started leveraging it. The result was a dramatic improvement in both my confidence and my sense of direction.",
+    text: "Before I met Muruli sir and Amaresh sir, I had already watched their videos and adapted them in my preschool. Each and every talk of theirs was truly trustworthy and factual. They explained very well how my and my daughter's brain works, which has greatly helped us with good parenting and developing their abilities. It strengthened my confidence and I have become much stronger than before. It was a very good experience and I request and recommend others to utilize this for a better future. Thank you Muruli sir and Amaresh sir. As a preschool owner and teacher, I am very satisfied with Unique Truth.",
   },
   {
     id: 4,
-    name: "Emily Tanaka",
-    role: "Wellness Educator",
+    name: "Lakshmi Prabha JS",
+    role: "Digital Marketer, Tamil Nadu",
     stars: 5,
-    text: "The accuracy was remarkable. It identified core learning tendencies and emotional patterns that had shaped my entire career without me ever realising it. This is ancient wisdom made accessible through the precision of modern science.",
+    text: "When I first heard about fingerprint analysis, I was skeptical about how much could truly be uncovered from something so simple. However, after experiencing it myself, I was genuinely amazed. The analysis was not only highly relatable but also incredibly insightful, revealing aspects of my personality, strengths, and potential. It felt like they had a window into my unique blueprint, and the accuracy was almost insane. This is not just a service, it is an eye-opening journey of self-discovery. Dr. Muruli sir's depth of knowledge and intuitive approach made the entire experience not only insightful but also transformative. He has an exceptional ability to explain complex insights in a way that feels personal and relatable. I am deeply grateful getting this analysis done!",
   },
   {
     id: 5,
-    name: "Michael Osei",
-    role: "Executive Coach",
+    name: "Veda Kumar H P",
+    role: "Team Leader at Indo MIM Pvt Ltd, Bangalore",
     stars: 5,
-    text: "What sets this apart from every other personality assessment is its foundation in immutable biological data. The report is not about who you are today but who you inherently are — and that distinction has made all the difference for me.",
+    text: "Earlier I was very curious and had doubt about your analysis, but when I came back from your office yesterday, you erased all my doubts and confusion. Now I am very clear about me, and the path is visible for me now. The only thing is implementation. Do continue your amazing work towards creating a joyful life for every individual of this world. Your research is mind-blowing. So many people are suffering from many problems in the current situation, but no one is trying to find a cause for that. Unique Truth is the place for finding all the causes and most importantly every individual is a unique creation in this world. Most people do not know this important point. Who wants to live a joyful life, please know yourself first with Unique Truth. Once again thanks a lot to show me what I am.",
+  },
+  {
+    id: 6,
+    name: "Ashok Kumar K B",
+    role: "Founder & CEO, Ashok Realty Group",
+    stars: 5,
+    text: "Heartfelt thanks for your guidance, Dr. Muruli. I am writing to express my deepest gratitude for your invaluable guidance and insights into brain analysis. The knowledge and suggestions you have shared with me have not only inspired me but have also provided me with actionable steps to adopt in my daily life. Your mentorship has been truly transformative. It has allowed me to better understand myself, refine my thinking processes, and approach challenges with greater clarity and resilience. I am incredibly grateful for the time, effort, and wisdom you have invested in helping me grow. Thank you once again for being such a pivotal influence in my journey. I look forward to continuing to learn from you and applying your teachings in meaningful ways. With warm regards and heartfelt appreciation, Ashok Kumar K B.",
+  },
+  {
+    id: 7,
+    name: "Shravan Tallam",
+    role: "SAP Consultant at Deloitte, Bangalore",
+    stars: 5,
+    text: "I wish I had known about Unique Truth and Dr. Muruli sir earlier, which would have helped me gain so much clarity about my personal and professional life. Like sir rightly mentioned, this session has definitely made me understand my brain's software and how to utilize it to its full potential. From a career point of view it is very important for us to know our strengths and core qualities so that we can easily reach greater heights in our professional life. Thank you Dr. Muruli sir and Unique Truth!",
+  },
+  {
+    id: 8,
+    name: "Manish Khedia",
+    role: "Parent",
+    stars: 5,
+    text: "Had an opportunity to connect with Dr. Muruli to go through fingerprint analysis for our daughter and we must admit he helped identify the blind spots, reaffirmed some of our observations as a parent, and guided us for our go-forward journey as a parent using our daughter's strengths and working on some areas to help her improve. Truly an amazing experience. Dr. Muruli is very approachable. Wishing you all the best as you continue your journey to help each individual understand their traits and help them succeed and be happy!",
   },
 ];
 
@@ -97,7 +118,7 @@ export default function Clientreviews() {
   }, []);
 
   useEffect(() => {
-    const t = setInterval(next, 5500);
+    const t = setInterval(next, 10000);
     return () => clearInterval(t);
   }, [next]);
 

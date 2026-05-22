@@ -148,11 +148,37 @@
   font-display: swap;
 }
 
+/* BabySnail – brand wordmark "unique" */
+@font-face {
+  font-family: "BabySnail";
+  src: url("./assets/fonts/logofont/BabySnail.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Candara – brand wordmark "TRUTH" */
+@font-face {
+  font-family: "Candara";
+  src: url("./assets/fonts/logofont/candara.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
   --font-cormorant-garamond: "Cormorant Garamond", serif;
   --font-dm-sans: "DM Sans", sans-serif;
   --font-montserrat: "Montserrat", sans-serif;
   --font-pacifico: "Pacifico", cursive;
+}
+
+/* Service page header — bold geometric sans (Unique TRUTH “TRUTH” wordmark style) */
+.font-service-truth-header {
+  font-family: "Montserrat", var(--font-montserrat), ui-sans-serif, system-ui,
+    sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.14em;
 }
 
 @layer base {

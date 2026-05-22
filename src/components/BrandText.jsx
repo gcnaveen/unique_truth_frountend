@@ -2,13 +2,13 @@ import React from "react";
 
 const BRAND_WORD_REGEX = /(Unique|Truth|TRUTH)/g;
 const UNIQUE_WORD_STYLE = {
-  fontFamily: '"Pacifico", "Brush Script MT", "Segoe Script", cursive',
+  fontFamily: '"BabySnail", "Pacifico", cursive',
   fontStyle: "normal",
   letterSpacing: "0.01em",
   lineHeight: 1,
 };
 const TRUTH_WORD_STYLE = {
-  fontFamily: '"Montserrat", "Arial", sans-serif',
+  fontFamily: '"Candara", "Montserrat", sans-serif',
   fontStyle: "normal",
   textTransform: "uppercase",
 };
@@ -24,7 +24,7 @@ export default function BrandText({ text, children }) {
         if (part === "Unique") {
           return (
             <span key={`unique-${idx}`} style={UNIQUE_WORD_STYLE}>
-              unique
+              Unique
             </span>
           );
         }

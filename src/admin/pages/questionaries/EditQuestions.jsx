@@ -275,7 +275,7 @@ const EditQuestions = () => {
           </div>
         ) : null}
 
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <button
             type="button"
             onClick={addQuestion}
@@ -289,6 +289,13 @@ const EditQuestions = () => {
             className="rounded-xl bg-linear-to-r from-[#c9a86c] to-[#5eead4] px-5 py-2 text-sm font-semibold text-[#0f2e1a] disabled:opacity-70"
           >
             {isSubmitting ? "Updating..." : "Update Questionary"}
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate("/admin/dashboard/questionaries")}
+            className="rounded-xl border border-white/30 bg-white/5 px-5 py-2 text-sm font-semibold text-white/90 hover:bg-white/10"
+          >
+            Cancel
           </button>
         </div>
       </form>

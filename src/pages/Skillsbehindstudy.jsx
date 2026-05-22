@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { QuestionaryService } from "../api/questionaries";
 import QuestionaryEnquiryFlow from "../components/QuestionaryEnquiryFlow";
+import ServiceJourneyCtaButton, {
+  SERVICE_ENQUIRY_ANCHOR_ID,
+} from "../components/ServiceJourneyCtaButton";
 import BrandText from "../components/BrandText";
 
 const useInView = (threshold = 0.1) => {
@@ -85,7 +88,7 @@ const Skillsbehindstudy = () => {
               </svg>
               Back
             </button>
-            <div className="text-xs font-semibold uppercase tracking-[0.2em] text-[#5eead4]">
+            <div className="font-service-truth-header text-[0.65rem] uppercase tracking-[0.16em] text-[#fff8ef] sm:text-xs">
               Skills Behind Studies
             </div>
           </div>
@@ -105,14 +108,16 @@ const Skillsbehindstudy = () => {
             </p>
           </FadeUp>
 
-          <FadeUp delay={130}>
-            <QuestionaryEnquiryFlow
-              service={QuestionaryService.SKILLS_BEHIND_STUDIES}
-              interstitialBeforeEnquiry={
-                "Are you curious to understand your child's Specific learning methods as per their Uniqueness and Are you expecting your child to study stress free and perform better in studies – Let's register and book an appointment connect Unique TRUTH experts."
-              }
-            />
-          </FadeUp>
+          <div id={SERVICE_ENQUIRY_ANCHOR_ID} className="scroll-mt-28">
+            <FadeUp delay={130}>
+              <QuestionaryEnquiryFlow
+                service={QuestionaryService.SKILLS_BEHIND_STUDIES}
+                interstitialBeforeEnquiry={
+                  "Are you curious to understand your child's Specific learning methods as per their Uniqueness and Are you expecting your child to study stress free and perform better in studies – Let's register and book an appointment connect Unique TRUTH experts."
+                }
+              />
+            </FadeUp>
+          </div>
 
           {/* Key Benefits */}
           <div className="mb-8">
@@ -128,25 +133,20 @@ const Skillsbehindstudy = () => {
             {[
               "100% Stress Free Study Methods",
               "20 to 30+% Increase in Marks",
-              "Builds Self Confidence",
+              "Builds Confidence in Every Learning",
               "1 Year Continued Support",
             ].map((benefit, idx) => (
               <FadeUp key={idx} delay={idx * 100 + 200}>
                 <div className="group h-full p-6 rounded-2xl border border-white/10 bg-white/3 backdrop-blur-sm hover:bg-white/8 transition-all duration-500 hover:border-[#c9a86c]/30 hover:shadow-lg hover:shadow-amber-600/10">
                   <div className="flex items-start gap-4">
-                    <div className="w-6 h-6 mt-1 shrink-0 rounded-full bg-gradient-to-br from-[#5eead4] to-[#c9a86c] flex items-center justify-center">
-                      <svg
-                        className="w-3 h-3 text-[#0f2e1a]"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </div>
+                    <img
+                      src="/assets/Fingerprint.png"
+                      alt=""
+                      className="h-7 w-7 mt-0.5 shrink-0 object-contain"
+                      width={28}
+                      height={28}
+                      aria-hidden
+                    />
                     <p className="text-[0.95rem] leading-relaxed text-[rgba(255,248,236,0.75)]">
                       {benefit}
                     </p>
@@ -237,9 +237,9 @@ const Skillsbehindstudy = () => {
                   Unlock your child's true learning potential with our
                   scientifically-proven approach tailored to their unique needs.
                 </p>
-                <button className="inline-block px-8 py-4 rounded-full bg-gradient-to-r from-[#c9a86c] to-[#5eead4] text-[#0f2e1a] font-semibold text-sm uppercase tracking-[0.15em] hover:shadow-xl hover:shadow-amber-600/40 transition-all duration-300 hover:scale-105 cursor-pointer">
+                <ServiceJourneyCtaButton hasEnquiryFlow>
                   Start Your Child's Journey
-                </button>
+                </ServiceJourneyCtaButton>
               </div>
             </div>
           </FadeUp>

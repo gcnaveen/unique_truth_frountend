@@ -31,6 +31,7 @@ import PortalSessionsHome from "./portal/pages/sessions/SessionsHome";
 import PortalSessionDetailPage from "./portal/pages/sessions/SessionDetailPage";
 import PortalSettingsHome from "./portal/pages/settings/SettingsHome";
 import PaymentReturnPage from "./portal/pages/payment/PaymentReturnPage";
+import LogoSnowfall from "./components/Logosnowfall";
 import { getDashboardHome, roleMatches } from "./utils/roles";
 
 const ScrollToTop = () => {
@@ -92,6 +93,7 @@ const App = () => {
 
   return (
     <>
+      <LogoSnowfall />
       <ScrollToTop />
       <Routes>
         <Route path="/" element={<Homepage />} />
