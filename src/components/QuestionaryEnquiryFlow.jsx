@@ -53,7 +53,8 @@ export default function QuestionaryEnquiryFlow({
         setQuestionary(picked || null);
       } catch (apiError) {
         setError(
-          apiError?.response?.data?.message || "Failed to load questions for this service.",
+          apiError?.response?.data?.message ||
+            "Failed to load questions for this service.",
         );
       } finally {
         setLoading(false);
@@ -66,7 +67,9 @@ export default function QuestionaryEnquiryFlow({
   const questions = useMemo(
     () =>
       Array.isArray(questionary?.questions)
-        ? [...questionary.questions].sort((a, b) => (a?.order ?? 0) - (b?.order ?? 0))
+        ? [...questionary.questions].sort(
+            (a, b) => (a?.order ?? 0) - (b?.order ?? 0),
+          )
         : [],
     [questionary],
   );
@@ -83,10 +86,10 @@ export default function QuestionaryEnquiryFlow({
     pastQuestions && hasInterstitial && enquiryIntent === null;
 
   const showForm =
-    pastQuestions &&
-    (!hasInterstitial || enquiryIntent === "yes");
+    pastQuestions && (!hasInterstitial || enquiryIntent === "yes");
 
-  const showDeclined = pastQuestions && hasInterstitial && enquiryIntent === "no";
+  const showDeclined =
+    pastQuestions && hasInterstitial && enquiryIntent === "no";
 
   const handleOptionChange = (value) => {
     if (!currentQuestion) return;
@@ -115,7 +118,9 @@ export default function QuestionaryEnquiryFlow({
     if (!coords) {
       setEnquiryLocation(null);
       setNearestBranchLabel("");
-      setLocationNote("Could not read coordinates for this place. Try another suggestion.");
+      setLocationNote(
+        "Could not read coordinates for this place. Try another suggestion.",
+      );
       return;
     }
 
@@ -124,7 +129,11 @@ export default function QuestionaryEnquiryFlow({
     setNearestBranchLabel("Finding nearest branch…");
 
     try {
-      const r = await fetchNearestFromCoords(coords.latitude, coords.longitude, "maps_place");
+      const r = await fetchNearestFromCoords(
+        coords.latitude,
+        coords.longitude,
+        "maps_place",
+      );
       setEnquiryLocation({
         latitude: r.latitude,
         longitude: r.longitude,
@@ -215,7 +224,9 @@ export default function QuestionaryEnquiryFlow({
       className={`rounded-2xl border p-6 shadow-lg backdrop-blur-sm sm:p-8 ${cardClassName}`}
     >
       {loading ? (
-        <p className="text-base font-medium text-[#0f2e1a]/75">Loading questions...</p>
+        <p className="text-base font-medium text-[#0f2e1a]/75">
+          Loading questions...
+        </p>
       ) : null}
       {error ? (
         <div className="mt-4 rounded-lg border border-red-400/50 bg-red-50 px-3 py-2 text-sm font-medium text-red-900">
@@ -251,7 +262,8 @@ export default function QuestionaryEnquiryFlow({
             </p>
             <p className="relative mt-2 text-[0.98rem] font-semibold leading-relaxed text-[#0a1a12] sm:text-[1.05rem]">
               If all your Answers are matching with our Analysis, you get{" "}
-              <strong className="font-bold text-[#0a1a12]">5% Discount</strong> in the Service.
+              <strong className="font-bold text-[#0a1a12]">5% Discount</strong>{" "}
+              in the Service.
             </p>
           </div>
 
@@ -279,10 +291,15 @@ export default function QuestionaryEnquiryFlow({
       ) : null}
 
       {started && showForm ? (
-        <form onSubmit={handleSubmit} className="mt-1 grid gap-3 sm:grid-cols-2">
+        <form
+          onSubmit={handleSubmit}
+          className="mt-1 grid gap-3 sm:grid-cols-2"
+        >
           <input
             value={form.name}
-            onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
+            onChange={(event) =>
+              setForm((prev) => ({ ...prev, name: event.target.value }))
+            }
             placeholder="Name"
             className="rounded-xl border border-[#0f2e1a]/20 bg-white px-4 py-3 text-base text-[#0f2e1a] outline-none placeholder:text-[#0f2e1a]/45 focus:border-[#0d9488]/70"
           />
@@ -297,27 +314,40 @@ export default function QuestionaryEnquiryFlow({
           <input
             type="email"
             value={form.email}
-            onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))}
+            onChange={(event) =>
+              setForm((prev) => ({ ...prev, email: event.target.value }))
+            }
             placeholder="Email"
             className="rounded-xl border border-[#0f2e1a]/20 bg-white px-4 py-3 text-base text-[#0f2e1a] outline-none placeholder:text-[#0f2e1a]/45 focus:border-[#0d9488]/70"
           />
-          <input
-            value={form.gender}
-            onChange={(event) => setForm((prev) => ({ ...prev, gender: event.target.value }))}
-            placeholder="Gender"
-            className="rounded-xl border border-[#0f2e1a]/20 bg-white px-4 py-3 text-base text-[#0f2e1a] outline-none placeholder:text-[#0f2e1a]/45 focus:border-[#0d9488]/70"
-          />
+          <label className="relative block">
+            <select
+              value={form.gender}
+              onChange={(event) =>
+                setForm((prev) => ({ ...prev, gender: event.target.value }))
+              }
+              className="w-full rounded-xl border border-[#0f2e1a]/20 bg-white px-4 py-3 text-base text-[#0f2e1a] outline-none focus:border-[#0d9488]/70"
+            >
+              <option value="">Select Gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Others">Others</option>
+            </select>
+          </label>
           <input
             type="number"
             min="1"
             value={form.age}
-            onChange={(event) => setForm((prev) => ({ ...prev, age: event.target.value }))}
+            onChange={(event) =>
+              setForm((prev) => ({ ...prev, age: event.target.value }))
+            }
             placeholder="Age"
             className="rounded-xl border border-[#0f2e1a]/20 bg-white px-4 py-3 text-base text-[#0f2e1a] outline-none placeholder:text-[#0f2e1a]/45 focus:border-[#0d9488]/70 sm:col-span-2"
           />
           <div className="rounded-xl border border-[#0f2e1a]/12 bg-[#f8faf8] p-4 sm:col-span-2">
             <p className="text-sm font-medium text-[#0f2e1a]/85">
-              Select your location — we show your nearest franchise as soon as you pick a result (Google Places, same as admin).
+              Select your location — we show your nearest franchise as soon as
+              you pick a result.
             </p>
             <div className="mt-3">
               <PlaceSearchAutocomplete
@@ -342,7 +372,9 @@ export default function QuestionaryEnquiryFlow({
               className="mt-1 w-full cursor-default rounded-xl border border-[#0f2e1a]/15 bg-[#f8faf8] px-4 py-3 text-sm text-[#0f2e1a]/90 outline-none"
             />
             {locationNote ? (
-              <p className="mt-1 text-xs font-medium text-amber-800/90">{locationNote}</p>
+              <p className="mt-1 text-xs font-medium text-amber-800/90">
+                {locationNote}
+              </p>
             ) : null}
           </div>
           <button
@@ -350,7 +382,11 @@ export default function QuestionaryEnquiryFlow({
             disabled={submitting || resolvingNearest}
             className="rounded-full bg-linear-to-r from-[#c9a86c] to-[#5eead4] px-6 py-3 text-base font-semibold text-[#0f2e1a] sm:col-span-2 disabled:opacity-70"
           >
-            {submitting ? "Submitting..." : resolvingNearest ? "Finding branch…" : "Submit Enquiry"}
+            {submitting
+              ? "Submitting..."
+              : resolvingNearest
+                ? "Finding branch…"
+                : "Submit Enquiry"}
           </button>
         </form>
       ) : null}
