@@ -12,6 +12,9 @@ const initialValue = {
   is_logged_in: false,
   venue: null,
   venueProfile: null,
+  canAccessDashboard: false,
+  advancePayment: null,
+  counselingLevel: "",
 };
 
 export const userSlice = createSlice({

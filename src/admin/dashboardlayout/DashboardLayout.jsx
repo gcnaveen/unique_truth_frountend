@@ -2,6 +2,13 @@ import { useState, useEffect } from "react";
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../../reducers/user";
+import {
+  getDashboardHome,
+  isCounsellor,
+  isFranchiseAdmin,
+  isPlatformAdmin,
+  isSales,
+} from "../../utils/roles";
 
 // ── Icons ──────────────────────────────────────────────────────────────────
 
@@ -73,7 +80,114 @@ const DaybookIcon = ({ size = 20 }) => (
   </svg>
 );
 
+const FranchiseIcon = ({ size = 20 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M3 21h18" />
+    <path d="M5 21V7l7-4 7 4v14" />
+    <path d="M9 10h.01" />
+    <path d="M15 10h.01" />
+    <path d="M12 21v-5" />
+  </svg>
+);
+
+const CarrierIcon = ({ size = 20 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" />
+    <path d="M15 18H9" />
+    <path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14" />
+    <circle cx="17" cy="18" r="2" />
+    <circle cx="7" cy="18" r="2" />
+  </svg>
+);
+
+const UsersIcon = ({ size = 20 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+    <circle cx="8.5" cy="7" r="3.5" />
+    <path d="M20 8v6" />
+    <path d="M17 11h6" />
+  </svg>
+);
+
 // ── Nav config ──────────────────────────────────────────────────────────────
+
+const counsellorNavItems = [
+  {
+    path: "/counsellor/dashboard",
+    label: "Dashboard",
+    icon: DaybookIcon,
+    end: true,
+  },
+  {
+    path: "/counsellor/dashboard/assigned-users",
+    label: "Assigned users",
+    icon: UsersIcon,
+    end: false,
+  },
+  {
+    path: "/counsellor/dashboard/sessions",
+    label: "Sessions",
+    icon: LeadsIcon,
+    end: false,
+  },
+];
+
+const salesNavItems = [
+  {
+    path: "/sales/dashboard/enquiries",
+    label: "Enquiries",
+    icon: LeadsIcon,
+    end: false,
+  },
+];
+
+const franchiseAdminNavItems = [
+  {
+    path: "/franchise-admin/dashboard/team",
+    label: "Team",
+    icon: UsersIcon,
+    end: false,
+  },
+  {
+    path: "/franchise-admin/dashboard/enquiries",
+    label: "Enquiries",
+    icon: LeadsIcon,
+    end: false,
+  },
+  {
+    path: "/franchise-admin/dashboard/carriers",
+    label: "Carriers",
+    icon: CarrierIcon,
+    end: false,
+  },
+];
 
 const adminNavItems = [
   {
@@ -86,6 +200,24 @@ const adminNavItems = [
     path: "/admin/dashboard/enquiries",
     label: "Enquiries",
     icon: LeadsIcon,
+    end: false,
+  },
+  {
+    path: "/admin/dashboard/franchise",
+    label: "Franchise",
+    icon: FranchiseIcon,
+    end: false,
+  },
+  {
+    path: "/admin/dashboard/carriers",
+    label: "Carriers",
+    icon: CarrierIcon,
+    end: false,
+  },
+  {
+    path: "/admin/dashboard/users",
+    label: "Users",
+    icon: UsersIcon,
     end: false,
   },
 ];
@@ -165,8 +297,31 @@ export default function DashboardLayout() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { name, role } = useSelector((state) => state.user.value);
-  const navItems = adminNavItems;
-  const roleLabel = role ? String(role).toUpperCase() : "ADMIN";
+  const navItems = isFranchiseAdmin(role)
+    ? franchiseAdminNavItems
+    : isSales(role)
+      ? salesNavItems
+      : isCounsellor(role)
+        ? counsellorNavItems
+        : adminNavItems;
+  const dashboardTitle = isFranchiseAdmin(role)
+    ? "Franchise Admin"
+    : isSales(role)
+      ? "Sales"
+      : isCounsellor(role)
+        ? "Counsellor"
+        : "Admin Dashboard";
+  const roleLabel = isFranchiseAdmin(role)
+    ? "FRANCHISE ADMIN"
+    : isSales(role)
+      ? "SALES"
+      : isCounsellor(role)
+        ? "COUNSELLOR"
+        : isPlatformAdmin(role)
+          ? "ADMIN"
+          : role
+            ? String(role).toUpperCase()
+            : "USER";
 
   const handleLogout = () => {
     dispatch(logout());
@@ -209,7 +364,7 @@ export default function DashboardLayout() {
               />
               {!collapsed && (
                 <span className="text-[15px] font-bold text-white font-serif tracking-[-0.01em]">
-                  Admin Dashboard
+                  {dashboardTitle}
                 </span>
               )}
             </div>
@@ -278,7 +433,7 @@ export default function DashboardLayout() {
           {isMobile ? (
             <div className="flex items-center gap-2">
               <span className="text-[15px] font-bold text-white font-serif tracking-[-0.01em] xl:text-[17px]">
-                Admin Dashboard
+                {dashboardTitle}
               </span>
             </div>
           ) : (

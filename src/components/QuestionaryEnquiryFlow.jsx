@@ -1,8 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   createQuestionaryEnquiry,
   getQuestionariesByService,
 } from "../api/questionaries";
+import PlaceSearchAutocomplete from "./PlaceSearchAutocomplete";
+import {
+  fetchNearestFromCoords,
+  normalizeMapsPlace,
+} from "../utils/nearestFranchiseLocation";
 import BrandText from "./BrandText";
 
 export default function QuestionaryEnquiryFlow({
@@ -28,6 +33,12 @@ export default function QuestionaryEnquiryFlow({
     gender: "",
     age: "",
   });
+  const [nearestBranchLabel, setNearestBranchLabel] = useState("");
+  const [locationNote, setLocationNote] = useState("");
+  /** Set when user picks a place: coords + nearest + source for submit */
+  const [enquiryLocation, setEnquiryLocation] = useState(null);
+  const [resolvingNearest, setResolvingNearest] = useState(false);
+  const [placePickerKey, setPlacePickerKey] = useState(0);
 
   const hasInterstitial = Boolean(interstitialBeforeEnquiry?.trim());
 
@@ -92,6 +103,50 @@ export default function QuestionaryEnquiryFlow({
     setCurrentIndex((prev) => Math.max(0, prev - 1));
   };
 
+  const handleEnquiryPlaceSelected = useCallback(async (place) => {
+    if (!place) {
+      setEnquiryLocation(null);
+      setNearestBranchLabel("");
+      setLocationNote("");
+      return;
+    }
+
+    const coords = normalizeMapsPlace(place);
+    if (!coords) {
+      setEnquiryLocation(null);
+      setNearestBranchLabel("");
+      setLocationNote("Could not read coordinates for this place. Try another suggestion.");
+      return;
+    }
+
+    setResolvingNearest(true);
+    setLocationNote("");
+    setNearestBranchLabel("Finding nearest branch…");
+
+    try {
+      const r = await fetchNearestFromCoords(coords.latitude, coords.longitude, "maps_place");
+      setEnquiryLocation({
+        latitude: r.latitude,
+        longitude: r.longitude,
+        nearest: r.nearest,
+        locationSource: r.locationSource,
+      });
+      const notes = [];
+      if (r.nearestError) notes.push(r.nearestError);
+      if (r.nearestQueried && !r.nearest && !r.nearestError) {
+        notes.push("No nearest branch was returned for this location.");
+      }
+      setNearestBranchLabel(r.nearest?.label || "");
+      setLocationNote(notes.join(" "));
+    } catch (err) {
+      setEnquiryLocation(null);
+      setNearestBranchLabel("");
+      setLocationNote(err?.message || "Nearest branch lookup failed.");
+    } finally {
+      setResolvingNearest(false);
+    }
+  }, []);
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
@@ -119,6 +174,11 @@ export default function QuestionaryEnquiryFlow({
         type: question?.type || "single_choice",
       }));
 
+      let latitude = enquiryLocation?.latitude ?? null;
+      let longitude = enquiryLocation?.longitude ?? null;
+      let nearest = enquiryLocation?.nearest ?? null;
+      let locationSource = enquiryLocation?.locationSource ?? null;
+
       await createQuestionaryEnquiry(null, questionary._id, {
         name: form.name.trim(),
         phoneNumber: form.phoneNumber.trim(),
@@ -126,6 +186,11 @@ export default function QuestionaryEnquiryFlow({
         gender: form.gender.trim(),
         age: Number(form.age),
         answers,
+        latitude,
+        longitude,
+        locationSource,
+        nearestFranchiseId: nearest?.id || null,
+        nearestFranchiseName: nearest?.name || null,
       });
 
       setSuccess("Enquiry submitted successfully.");
@@ -134,6 +199,10 @@ export default function QuestionaryEnquiryFlow({
       setAnswersMap({});
       setEnquiryIntent(null);
       setForm({ name: "", phoneNumber: "", email: "", gender: "", age: "" });
+      setNearestBranchLabel("");
+      setLocationNote("");
+      setEnquiryLocation(null);
+      setPlacePickerKey((k) => k + 1);
     } catch (submitError) {
       setError(submitError?.response?.data?.message || submitError.message);
     } finally {
@@ -313,12 +382,42 @@ export default function QuestionaryEnquiryFlow({
             placeholder="Age"
             className="rounded-xl border border-[#0f2e1a]/20 bg-white px-4 py-3 text-base text-[#0f2e1a] outline-none placeholder:text-[#0f2e1a]/45 focus:border-[#0d9488]/70 sm:col-span-2"
           />
+          <div className="rounded-xl border border-[#0f2e1a]/12 bg-[#f8faf8] p-4 sm:col-span-2">
+            <p className="text-sm font-medium text-[#0f2e1a]/85">
+              Select your location — we show your nearest franchise as soon as you pick a result (Google Places, same as admin).
+            </p>
+            <div className="mt-3">
+              <PlaceSearchAutocomplete
+                key={placePickerKey}
+                theme="light"
+                label="Your location *"
+                hint="Search, then choose a suggestion. Nearest branch updates immediately."
+                disabled={submitting || resolvingNearest}
+                onPlaceSelected={handleEnquiryPlaceSelected}
+                onClear={() => void handleEnquiryPlaceSelected(null)}
+              />
+            </div>
+          </div>
+          <div className="sm:col-span-2">
+            <label className="block text-xs font-semibold uppercase tracking-wide text-[#0f2e1a]/60">
+              Nearest franchise
+            </label>
+            <input
+              readOnly
+              value={nearestBranchLabel}
+              placeholder="Choose your location above to see your nearest branch."
+              className="mt-1 w-full cursor-default rounded-xl border border-[#0f2e1a]/15 bg-[#f8faf8] px-4 py-3 text-sm text-[#0f2e1a]/90 outline-none"
+            />
+            {locationNote ? (
+              <p className="mt-1 text-xs font-medium text-amber-800/90">{locationNote}</p>
+            ) : null}
+          </div>
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || resolvingNearest}
             className="rounded-full bg-linear-to-r from-[#c9a86c] to-[#5eead4] px-6 py-3 text-base font-semibold text-[#0f2e1a] sm:col-span-2 disabled:opacity-70"
           >
-            {submitting ? "Submitting..." : "Submit Enquiry"}
+            {submitting ? "Submitting..." : resolvingNearest ? "Finding branch…" : "Submit Enquiry"}
           </button>
         </form>
       ) : null}

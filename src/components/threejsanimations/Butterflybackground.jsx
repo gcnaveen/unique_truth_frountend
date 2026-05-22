@@ -130,11 +130,11 @@ export default function ButterflyBackground() {
     }
 
     let frame;
-    const clock = new THREE.Clock();
+    const t0 = performance.now();
 
     const animate = () => {
       frame = requestAnimationFrame(animate);
-      const t = clock.getElapsedTime();
+      const t = (performance.now() - t0) / 1000;
 
       butterflies.forEach((b) => {
         const flap = Math.sin(t * b.flapSpeed + b.flapOffset) * 0.6;

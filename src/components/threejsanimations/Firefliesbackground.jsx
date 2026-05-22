@@ -112,11 +112,11 @@ export default function FirefliesBackground() {
     }
 
     let frame;
-    const clock = new THREE.Clock();
+    const t0 = performance.now();
 
     const animate = () => {
       frame = requestAnimationFrame(animate);
-      const t = clock.getElapsedTime();
+      const t = (performance.now() - t0) / 1000;
 
       fireflies.forEach((f) => {
         // --- Pulse logic ---

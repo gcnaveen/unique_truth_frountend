@@ -195,7 +195,7 @@ function useSkyScene(mountRef) {
     let frame = null;
     let lastFrameMs = 0;
     let isVisible = true;
-    const clock = new THREE.Clock();
+    const t0 = performance.now();
 
     const animate = () => {
       if (!isVisible) {
@@ -209,7 +209,7 @@ function useSkyScene(mountRef) {
       if (now - lastFrameMs < minFrameMs) return;
       lastFrameMs = now;
 
-      const t = clock.getElapsedTime();
+      const t = (performance.now() - t0) / 1000;
       sunG.rotation.z = Math.sin(t * 0.15) * 0.1;
       sunG.scale.setScalar(1 + Math.sin(t * 0.5) * 0.015);
 

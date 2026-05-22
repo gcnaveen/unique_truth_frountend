@@ -77,6 +77,7 @@ const Contactus = () => {
     contactNumber: "",
     message: "",
   });
+  const [submitting, setSubmitting] = useState(false);
 
   const mapsSrc = useMemo(() => {
     // Public embed URL (no API key needed).
@@ -87,12 +88,17 @@ const Contactus = () => {
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
   };
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
-
-    // Replace with API submission when you wire the backend.
-    console.log("Contact form submit:", form);
-    setForm({ fullName: "", email: "", contactNumber: "", message: "" });
+    const formSnapshot = { ...form };
+    setSubmitting(true);
+    try {
+      // Replace with API submission when you wire the backend.
+      console.log("Contact form submit:", formSnapshot);
+      setForm({ fullName: "", email: "", contactNumber: "", message: "" });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -277,9 +283,10 @@ const Contactus = () => {
 
                 <button
                   type="submit"
-                  className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-full border border-teal-400/35 bg-teal-400/15 py-3 text-[0.78rem] font-semibold tracking-[0.02em] text-[#d9fbff] transition-colors duration-200 hover:bg-teal-400/25 hover:border-teal-400/55"
+                  disabled={submitting}
+                  className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-full border border-teal-400/35 bg-teal-400/15 py-3 text-[0.78rem] font-semibold tracking-[0.02em] text-[#d9fbff] transition-colors duration-200 hover:bg-teal-400/25 hover:border-teal-400/55 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  BOOK APPOINTMENT NOW
+                  {submitting ? "Sending…" : "BOOK APPOINTMENT NOW"}
                   <span aria-hidden="true" className="text-[#d9fbff]">
                     &rarr;
                   </span>

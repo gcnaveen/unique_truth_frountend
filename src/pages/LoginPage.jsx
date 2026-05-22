@@ -2,13 +2,16 @@ import { useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import ButterflyBackground from "../components/threejsanimations/Butterflybackground";
-import { loginUser } from "../api/auth";
+import {
+  getAuthErrorMessage,
+  loginUser,
+  pickAuthToken,
+  pickAuthUser,
+} from "../api/auth";
 import { login } from "../reducers/user";
-
-const normalizeRole = (roleValue) => String(roleValue || "").toLowerCase();
-
-const pickToken = (payload) =>
-  payload?.access_token || payload?.accessToken || payload?.token || "";
+import { pickPortalAccessFromLogin } from "../portal/utils/access";
+import { getDashboardHome, isPortalUser, normalizeAuthRole } from "../utils/roles";
+import { MIN_PASSWORD_LENGTH, normalizeLoginEmail } from "../utils/authConstants";
 
 const LoginPage = () => {
   const dispatch = useDispatch();
@@ -36,21 +39,22 @@ const LoginPage = () => {
       setIsSubmitting(true);
 
       const response = await loginUser({
-        email: email.trim(),
+        email,
         password,
       });
 
-      const userData = response?.data || response?.user || response;
-      const token = pickToken(response) || pickToken(userData);
+      const userData = pickAuthUser(response);
+      const token = pickAuthToken(response);
       const refreshToken =
         response?.refresh_token || response?.refreshToken || "";
-      const role = normalizeRole(userData?.role || response?.role);
+      const role = normalizeAuthRole(userData?.role || response?.role);
+      const portalAccess = pickPortalAccessFromLogin(response, userData);
 
       const authPayload = {
         id: userData?._id || userData?.id || "",
         name: userData?.name || response?.name || "",
         role,
-        email_id: userData?.email || response?.email || email.trim(),
+        email_id: userData?.email || response?.email || normalizeLoginEmail(email),
         access_token: token,
         refresh_token: refreshToken,
         venueId: userData?.venueId || null,
@@ -58,6 +62,9 @@ const LoginPage = () => {
         is_logged_in: Boolean(token),
         venue: userData?.venue || null,
         venueProfile: userData?.venueProfile || null,
+        canAccessDashboard: portalAccess.canAccessDashboard,
+        advancePayment: portalAccess.advancePayment,
+        counselingLevel: portalAccess.counselingLevel,
       };
 
       if (!authPayload.access_token) {
@@ -71,15 +78,14 @@ const LoginPage = () => {
         return;
       }
 
-      navigate(role === "admin" ? "/admin/dashboard/questionaries" : "/user/home", {
-        replace: true,
-      });
-    } catch (submitError) {
-      setError(
-        submitError?.response?.data?.message ||
-          submitError?.message ||
-          "Login failed. Please try again.",
+      navigate(
+        isPortalUser(role) && !portalAccess.canAccessDashboard
+          ? "/portal/dashboard"
+          : getDashboardHome(role),
+        { replace: true },
       );
+    } catch (submitError) {
+      setError(getAuthErrorMessage(submitError));
     } finally {
       setIsSubmitting(false);
     }
@@ -110,7 +116,8 @@ const LoginPage = () => {
             Welcome Back
           </h1>
           <p className="mb-8 text-center text-sm text-white/80 xl:text-base">
-            Sign in to continue to your dashboard.
+            Sign in to continue to your dashboard. Passwords must be at least{" "}
+            {MIN_PASSWORD_LENGTH} characters (same as when the account was created).
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-5">
