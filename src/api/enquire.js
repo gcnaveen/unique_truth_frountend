@@ -30,3 +30,11 @@ export const getEnquiriesStats = async (token) => {
   return response.data;
 };
 
+export const getCompletePackages = async (token, { service } = {}) => {
+  const response = await enquireClient.get("/enquiries/complete-packages", {
+    ...authHeaders(token),
+    params: service ? { service } : undefined,
+  });
+  return response.data;
+};
+

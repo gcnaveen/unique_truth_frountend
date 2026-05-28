@@ -372,6 +372,19 @@ const FranchiseHome = () => {
             {totalFranchise}
           </p>
           <div className="flex items-center gap-2">
+            <label className="text-xs text-white/80">Go to page</label>
+            <select
+              value={currentPage}
+              onChange={(e) => setCurrentPage(Number(e.target.value) || 1)}
+              disabled={loading}
+              className="h-9 rounded-lg border border-white/25 bg-white/10 px-2 text-xs font-semibold text-white outline-none disabled:opacity-50"
+            >
+              {Array.from({ length: Math.max(totalPages, 1) }).map((_, idx) => (
+                <option key={idx + 1} value={idx + 1}>
+                  {idx + 1}
+                </option>
+              ))}
+            </select>
             <button
               type="button"
               onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
@@ -388,7 +401,7 @@ const FranchiseHome = () => {
               disabled={currentPage >= totalPages || loading}
               className="inline-flex h-9 min-w-20 items-center justify-center rounded-lg border border-white/25 bg-white/10 px-3 text-xs font-semibold text-white hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Next
+              Next →
             </button>
           </div>
         </div>

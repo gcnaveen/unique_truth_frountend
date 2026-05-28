@@ -65,6 +65,7 @@ const LoginPage = () => {
         venueProfile: userData?.venueProfile || null,
         canAccessDashboard: portalAccess.canAccessDashboard,
         advancePayment: portalAccess.advancePayment,
+        fullPayment: portalAccess.fullPayment,
         counselingLevel: portalAccess.counselingLevel,
       };
 

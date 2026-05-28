@@ -22,6 +22,7 @@ export const QuestionaryService = Object.freeze({
   BEHAVIORAL_AWARENESS: "Behavioral Awareness",
   RELATIONSHIP_AWARENESS: "Relationship Awareness",
   TALENT_AWARENESS: "Talent Awareness",
+  COMPLETE_PACKAGE: "Complete Package",
 });
 
 export const getQuestionaries = async (token) => {

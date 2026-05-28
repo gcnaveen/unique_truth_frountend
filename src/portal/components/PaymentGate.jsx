@@ -7,9 +7,7 @@ import {
   formatRupees,
   getCounselingLevelLabel,
 } from "../utils/format";
-
-const DEFAULT_MIN = 500;
-const DEFAULT_MAX = 50000;
+import { getPricingBreakdown } from "../utils/pricing";
 
 const normalizeLevels = (response) => {
   const payload = response?.data ?? response ?? {};
@@ -22,7 +20,6 @@ const normalizeLevels = (response) => {
             id: item?.id || item?.value || item?.level,
             label: item?.label || getCounselingLevelLabel(item?.id),
             description: item?.description || item?.tagline,
-            suggestedAmountRupees: item?.suggestedAmountRupees ?? item?.amountRupees,
           },
     );
   }
@@ -43,17 +40,23 @@ export default function PaymentGate({ accessToken, profile, onAccessGranted }) {
   const [checking, setChecking] = useState(false);
 
   const paymentStatus = getAdvancePaymentStatus(profile);
-  const minRupees =
-    profile?.advancePayment?.minRupees ??
-    profile?.paymentBounds?.minRupees ??
-    DEFAULT_MIN;
-  const maxRupees =
-    profile?.advancePayment?.maxRupees ??
-    profile?.paymentBounds?.maxRupees ??
-    DEFAULT_MAX;
-
   const enquiries = profile?.enquiries ?? profile?.enquirySummary ?? [];
+  const targetEnquiry = enquiries[0] || profile?.enquiry || null;
+  const targetService = targetEnquiry?.service || profile?.service || "";
   const defaultEnquiryId = enquiries[0]?._id || enquiries[0]?.id || profile?.enquiryId || "";
+
+  const selectedMeta = useMemo(
+    () => levels.find((l) => l.id === selectedLevel),
+    [levels, selectedLevel],
+  );
+  const pricing = useMemo(
+    () =>
+      getPricingBreakdown({
+        service: targetService,
+        counselingLevel: selectedLevel || "basic",
+      }),
+    [targetService, selectedLevel],
+  );
 
   useEffect(() => {
     const load = async () => {
@@ -62,30 +65,39 @@ export default function PaymentGate({ accessToken, profile, onAccessGranted }) {
         const response = await getCounselingLevels();
         const list = normalizeLevels(response);
         setLevels(list);
-        if (list[0]?.id) setSelectedLevel(list[0].id);
-        const suggested = list[0]?.suggestedAmountRupees;
-        if (suggested) setAmountRupees(String(suggested));
+        if (list[0]?.id) {
+          setSelectedLevel(list[0].id);
+          const next = getPricingBreakdown({
+            service: targetService,
+            counselingLevel: list[0].id,
+          });
+          setAmountRupees(String(next.advance));
+        }
       } catch {
         const fallback = normalizeLevels(null);
         setLevels(fallback);
-        if (fallback[0]?.id) setSelectedLevel(fallback[0].id);
+        if (fallback[0]?.id) {
+          setSelectedLevel(fallback[0].id);
+          const next = getPricingBreakdown({
+            service: targetService,
+            counselingLevel: fallback[0].id,
+          });
+          setAmountRupees(String(next.advance));
+        }
       } finally {
         setLoadingLevels(false);
       }
     };
     load();
-  }, []);
-
-  const selectedMeta = useMemo(
-    () => levels.find((l) => l.id === selectedLevel),
-    [levels, selectedLevel],
-  );
+  }, [targetService]);
 
   const handleLevelSelect = (level) => {
     setSelectedLevel(level.id);
-    if (level.suggestedAmountRupees) {
-      setAmountRupees(String(level.suggestedAmountRupees));
-    }
+    const next = getPricingBreakdown({
+      service: targetService,
+      counselingLevel: level.id,
+    });
+    setAmountRupees(String(next.advance));
   };
 
   const handleRefreshAccess = async () => {
@@ -112,8 +124,10 @@ export default function PaymentGate({ accessToken, profile, onAccessGranted }) {
       setError("Choose a counseling level.");
       return;
     }
-    if (!Number.isFinite(amount) || amount < minRupees || amount > maxRupees) {
-      setError(`Enter an amount between ${formatRupees(minRupees)} and ${formatRupees(maxRupees)}.`);
+    if (!Number.isFinite(amount) || amount !== pricing.advance) {
+      setError(
+        `Advance is fixed at 20%: ${formatRupees(pricing.advance)} for this level and package.`,
+      );
       return;
     }
     try {
@@ -128,9 +142,7 @@ export default function PaymentGate({ accessToken, profile, onAccessGranted }) {
       const data = response?.data ?? response;
       const checkoutUrl =
         data?.checkoutPageUrl || data?.checkoutUrl || data?.redirectUrl || data?.url;
-      if (!checkoutUrl) {
-        throw new Error("Checkout URL not returned. Contact support.");
-      }
+      if (!checkoutUrl) throw new Error("Checkout URL not returned. Contact support.");
       window.location.href = checkoutUrl;
     } catch (payError) {
       setError(payError?.response?.data?.message || payError?.message || "Payment could not start.");
@@ -150,8 +162,8 @@ export default function PaymentGate({ accessToken, profile, onAccessGranted }) {
             Complete your advance payment
           </h1>
           <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-white/75">
-            Your enquiry has been converted. Pay the advance and choose your counseling level to
-            unlock your dashboard, sessions, recordings, and personal data tools.
+            Advance is fixed at 20% of your total package amount based on counseling level.
+            Recordings and reports unlock after full payment.
           </p>
           {paymentStatus === "pending" ? (
             <span className="mt-4 inline-flex items-center gap-2 rounded-full border border-amber-400/40 bg-amber-500/15 px-4 py-1.5 text-xs font-semibold text-amber-100">
@@ -160,25 +172,6 @@ export default function PaymentGate({ accessToken, profile, onAccessGranted }) {
             </span>
           ) : null}
         </div>
-
-        <ol className="mb-8 grid gap-3 sm:grid-cols-3">
-          {[
-            { step: "1", title: "Choose level", desc: "Pick the program that fits you" },
-            { step: "2", title: "Pay advance", desc: "Secure checkout via PhonePe" },
-            { step: "3", title: "Access portal", desc: "Journey, sessions & audio" },
-          ].map((item) => (
-            <li
-              key={item.step}
-              className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-center"
-            >
-              <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#c9a86c]/20 text-xs font-bold text-[#fde68a]">
-                {item.step}
-              </span>
-              <p className="mt-2 text-sm font-semibold text-white">{item.title}</p>
-              <p className="text-xs text-white/55">{item.desc}</p>
-            </li>
-          ))}
-        </ol>
 
         {error ? (
           <div className="mb-4 rounded-xl border border-red-300/40 bg-red-500/15 px-4 py-3 text-sm text-red-100">
@@ -219,16 +212,24 @@ export default function PaymentGate({ accessToken, profile, onAccessGranted }) {
                       <p className="mt-2 text-sm font-medium text-white">
                         {level.description || meta.tagline}
                       </p>
-                      {level.suggestedAmountRupees ? (
-                        <p className="mt-1 text-xs text-[#a7f3d0]">
-                          Suggested {formatRupees(level.suggestedAmountRupees)}
-                        </p>
-                      ) : null}
                     </button>
                   );
                 })}
               </div>
             )}
+          </div>
+
+          <div className="rounded-xl border border-white/15 bg-white/5 p-4 text-sm">
+            <p className="text-white/80">Amount details (based on service + level)</p>
+            <p className="mt-2 text-white">
+              Total: <span className="font-semibold">{formatRupees(pricing.total)}</span>
+            </p>
+            <p className="text-white">
+              Advance (20%): <span className="font-semibold">{formatRupees(pricing.advance)}</span>
+            </p>
+            <p className="text-white">
+              Remaining: <span className="font-semibold">{formatRupees(pricing.remaining)}</span>
+            </p>
           </div>
 
           <div>
@@ -237,19 +238,12 @@ export default function PaymentGate({ accessToken, profile, onAccessGranted }) {
             </label>
             <input
               type="number"
-              min={minRupees}
-              max={maxRupees}
               step={100}
               value={amountRupees}
-              onChange={(e) => setAmountRupees(e.target.value)}
+              readOnly
               required
-              className="w-full rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-lg font-semibold text-white outline-none focus:border-[#5eead4]"
-              placeholder={`${minRupees} – ${maxRupees}`}
+              className="w-full rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-lg font-semibold text-white/90 outline-none"
             />
-            <p className="mt-2 text-xs text-white/55">
-              {selectedMeta?.label ? `${selectedMeta.label} · ` : ""}
-              Allowed range {formatRupees(minRupees)} – {formatRupees(maxRupees)}
-            </p>
           </div>
 
           <button

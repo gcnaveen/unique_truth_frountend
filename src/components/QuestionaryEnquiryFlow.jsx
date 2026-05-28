@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   createQuestionaryEnquiry,
   getQuestionariesByService,
+  QuestionaryService,
 } from "../api/questionaries";
 import PlaceSearchAutocomplete from "./PlaceSearchAutocomplete";
 import {
@@ -9,6 +10,13 @@ import {
   normalizeMapsPlace,
 } from "../utils/nearestFranchiseLocation";
 import BrandText from "./BrandText";
+
+const COMPLETE_PACKAGE_SERVICES = [
+  QuestionaryService.SKILLS_BEHIND_STUDIES,
+  QuestionaryService.BEHAVIORAL_AWARENESS,
+  QuestionaryService.RELATIONSHIP_AWARENESS,
+  QuestionaryService.TALENT_AWARENESS,
+];
 
 export default function QuestionaryEnquiryFlow({
   service,
@@ -39,18 +47,60 @@ export default function QuestionaryEnquiryFlow({
   const [enquiryLocation, setEnquiryLocation] = useState(null);
   const [resolvingNearest, setResolvingNearest] = useState(false);
   const [placePickerKey, setPlacePickerKey] = useState(0);
+  const [combinedQuestions, setCombinedQuestions] = useState(null);
 
   const hasInterstitial = Boolean(interstitialBeforeEnquiry?.trim());
+  const isCompletePackage = service === QuestionaryService.COMPLETE_PACKAGE;
 
   useEffect(() => {
     const loadQuestionary = async () => {
       try {
         setLoading(true);
         setError("");
-        const response = await getQuestionariesByService(null, service);
-        const payload = response?.data ?? response;
-        const picked = Array.isArray(payload) ? payload[0] : payload;
-        setQuestionary(picked || null);
+        setCombinedQuestions(null);
+
+        if (isCompletePackage) {
+          const [packageRes, ...serviceResponses] = await Promise.all([
+            getQuestionariesByService(null, QuestionaryService.COMPLETE_PACKAGE).catch(
+              () => null,
+            ),
+            ...COMPLETE_PACKAGE_SERVICES.map((svc) =>
+              getQuestionariesByService(null, svc),
+            ),
+          ]);
+
+          const packagePayload = packageRes?.data ?? packageRes;
+          const packageQuestionary = Array.isArray(packagePayload)
+            ? packagePayload[0]
+            : packagePayload;
+          setQuestionary(packageQuestionary || null);
+
+          const merged = serviceResponses.flatMap((res, serviceIndex) => {
+            const payload = res?.data ?? res;
+            const picked = Array.isArray(payload) ? payload[0] : payload;
+            const items = Array.isArray(picked?.questions) ? picked.questions : [];
+            return items
+              .sort((a, b) => (a?.order ?? 0) - (b?.order ?? 0))
+              .map((q, idx) => ({
+                ...q,
+                _combinedService: COMPLETE_PACKAGE_SERVICES[serviceIndex],
+                _combinedQuestionaryId: picked?._id || "",
+                _combinedOrder: idx,
+              }));
+          });
+
+          if (!merged.length) {
+            throw new Error(
+              "No questions configured for Complete Package services.",
+            );
+          }
+          setCombinedQuestions(merged);
+        } else {
+          const response = await getQuestionariesByService(null, service);
+          const payload = response?.data ?? response;
+          const picked = Array.isArray(payload) ? payload[0] : payload;
+          setQuestionary(picked || null);
+        }
       } catch (apiError) {
         setError(
           apiError?.response?.data?.message ||
@@ -62,16 +112,20 @@ export default function QuestionaryEnquiryFlow({
     };
 
     loadQuestionary();
-  }, [service]);
+  }, [service, isCompletePackage]);
 
   const questions = useMemo(
-    () =>
-      Array.isArray(questionary?.questions)
+    () => {
+      if (Array.isArray(combinedQuestions) && combinedQuestions.length) {
+        return combinedQuestions;
+      }
+      return Array.isArray(questionary?.questions)
         ? [...questionary.questions].sort(
             (a, b) => (a?.order ?? 0) - (b?.order ?? 0),
           )
-        : [],
-    [questionary],
+        : [];
+    },
+    [questionary, combinedQuestions],
   );
 
   const currentQuestion = questions[currentIndex];
@@ -173,7 +227,9 @@ export default function QuestionaryEnquiryFlow({
         throw new Error("All enquiry fields are required.");
       }
 
-      if (!questionary?._id) throw new Error("Questionary not found.");
+      const submitQuestionaryId =
+        questionary?._id || questions.find((q) => q?._combinedQuestionaryId)?._combinedQuestionaryId;
+      if (!submitQuestionaryId) throw new Error("Questionary not found.");
 
       const answers = questions.map((question, index) => ({
         questionId: question?._id || `${index}`,
@@ -181,6 +237,8 @@ export default function QuestionaryEnquiryFlow({
         value: answersMap[question?._id || `${index}`] || "",
         prompt: question?.prompt || "",
         type: question?.type || "single_choice",
+        service: question?._combinedService || service,
+        sourceQuestionaryId: question?._combinedQuestionaryId || questionary?._id || "",
       }));
 
       let latitude = enquiryLocation?.latitude ?? null;
@@ -188,7 +246,7 @@ export default function QuestionaryEnquiryFlow({
       let nearest = enquiryLocation?.nearest ?? null;
       let locationSource = enquiryLocation?.locationSource ?? null;
 
-      await createQuestionaryEnquiry(null, questionary._id, {
+      const payload = {
         name: form.name.trim(),
         phoneNumber: form.phoneNumber.trim(),
         email: form.email.trim(),
@@ -200,7 +258,13 @@ export default function QuestionaryEnquiryFlow({
         locationSource,
         nearestFranchiseId: nearest?.id || null,
         nearestFranchiseName: nearest?.name || null,
-      });
+      };
+      if (isCompletePackage) {
+        payload.packageType = "complete_package";
+        payload.selectedServices = COMPLETE_PACKAGE_SERVICES;
+      }
+
+      await createQuestionaryEnquiry(null, submitQuestionaryId, payload);
 
       setSuccess("Enquiry submitted successfully.");
       setStarted(false);
@@ -433,6 +497,11 @@ export default function QuestionaryEnquiryFlow({
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#0d9488]">
             Question {currentIndex + 1} / {questions.length}
           </p>
+          {currentQuestion?._combinedService ? (
+            <p className="mt-2 inline-flex rounded-full border border-[#0d9488]/25 bg-[#ccfbf1] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#0f766e]">
+              {currentQuestion._combinedService}
+            </p>
+          ) : null}
           <h4 className="mt-3 text-lg font-semibold leading-snug text-[#0a1a12] sm:text-xl">
             {currentQuestion.prompt}
           </h4>

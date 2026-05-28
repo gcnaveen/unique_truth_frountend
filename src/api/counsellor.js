@@ -136,3 +136,37 @@ export const getCounsellorAudioDownload = async (token, enquiryId, audioId) => {
   );
   return response.data;
 };
+
+export const presignCounsellorReport = async (token, enquiryId, payload = {}) => {
+  const response = await counsellorClient.post(
+    `/counsellor/assigned-users/${enquiryId}/reports/presign`,
+    payload,
+    authHeaders(token),
+  );
+  return response.data;
+};
+
+export const confirmCounsellorReport = async (token, enquiryId, payload) => {
+  const response = await counsellorClient.post(
+    `/counsellor/assigned-users/${enquiryId}/reports/confirm`,
+    payload,
+    authHeaders(token),
+  );
+  return response.data;
+};
+
+export const getCounsellorReportList = async (token, enquiryId) => {
+  const response = await counsellorClient.get(
+    `/counsellor/assigned-users/${enquiryId}/reports`,
+    authHeaders(token),
+  );
+  return response.data;
+};
+
+export const getCounsellorReportDownload = async (token, enquiryId, reportId) => {
+  const response = await counsellorClient.get(
+    `/counsellor/assigned-users/${enquiryId}/reports/${reportId}/download`,
+    authHeaders(token),
+  );
+  return response.data;
+};

@@ -1,16 +1,10 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { motion } from "motion/react";
 import { useSelector } from "react-redux";
 import { getPortalSessions } from "../../../api/portal";
-import {
-  formatDateTime,
-  formatLabel,
-  getId,
-  normalizePagedItems,
-} from "../../utils/format";
-
-const rowClass =
-  "flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/15 bg-white/8 px-4 py-4 transition hover:border-[#5eead4]/35";
+import { normalizePagedItems } from "../../utils/format";
+import PortalAmbient from "../../components/PortalAmbient";
+import SessionsCalendar from "./components/SessionsCalendar";
 
 export default function PortalSessionsHome() {
   const { access_token } = useSelector((state) => state.user.value);
@@ -24,7 +18,7 @@ export default function PortalSessionsHome() {
       try {
         setLoading(true);
         setError("");
-        const response = await getPortalSessions(access_token, { limit: 50, skip: 0 });
+        const response = await getPortalSessions(access_token, { limit: 100, skip: 0 });
         const { items } = normalizePagedItems(response);
         setSessions(items);
       } catch (fetchError) {
@@ -38,43 +32,52 @@ export default function PortalSessionsHome() {
   }, [access_token]);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="font-serif text-3xl font-semibold text-white">Sessions</h1>
-        <p className="mt-2 text-sm text-white/70">Booked slots and your session history.</p>
-      </div>
+    <div className="relative space-y-6">
+      <PortalAmbient />
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative"
+      >
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#5eead4]">
+          Your calendar
+        </p>
+        <h1 className="mt-1 font-serif text-3xl font-semibold text-white md:text-4xl">
+          Sessions
+        </h1>
+        <p className="mt-2 max-w-lg text-sm text-white/70">
+          Scheduled days are highlighted on the calendar. Select any date to see your booked
+          sessions.
+        </p>
+      </motion.div>
 
       {error ? (
-        <div className="rounded-xl border border-red-300/40 bg-red-500/15 px-4 py-3 text-sm text-red-100">
+        <div className="relative rounded-xl border border-red-300/40 bg-red-500/15 px-4 py-3 text-sm text-red-100">
           {error}
         </div>
       ) : null}
 
-      {loading ? (
-        <p className="text-sm text-white/60">Loading…</p>
+      {loading && sessions.length === 0 ? (
+        <div className="relative flex min-h-[320px] items-center justify-center rounded-3xl border border-white/10 bg-white/5">
+          <motion.p
+            animate={{ opacity: [0.4, 1, 0.4] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+            className="text-sm text-white/60"
+          >
+            Loading your schedule…
+          </motion.p>
+        </div>
       ) : sessions.length === 0 ? (
-        <p className="rounded-2xl border border-white/10 bg-white/5 px-6 py-10 text-center text-sm text-white/60">
-          No sessions booked yet. Your counsellor will schedule your first slot.
-        </p>
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="relative rounded-2xl border border-white/10 bg-white/5 px-6 py-10 text-center text-sm text-white/60"
+        >
+          No sessions booked yet. Your counsellor will schedule your first slot — it will appear on
+          the calendar automatically.
+        </motion.p>
       ) : (
-        <ul className="space-y-3">
-          {sessions.map((session) => {
-            const id = getId(session);
-            return (
-              <li key={id}>
-                <Link to={`/portal/dashboard/sessions/${id}`} className={rowClass}>
-                  <div>
-                    <p className="font-semibold text-white">{formatLabel(session.sessionType)}</p>
-                    <p className="text-sm text-white/65">{formatDateTime(session.scheduledAt)}</p>
-                  </div>
-                  <span className="rounded-full border border-[#5eead4]/40 bg-[#5eead4]/15 px-3 py-1 text-xs font-semibold text-[#a7f3d0]">
-                    {formatLabel(session.status)}
-                  </span>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+        <SessionsCalendar sessions={sessions} loading={loading} />
       )}
     </div>
   );

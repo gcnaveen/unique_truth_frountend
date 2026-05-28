@@ -6,6 +6,7 @@ import RelationshipAwareness from "./pages/Relationshipawareness";
 import Talentawareness from "./pages/Talentawareness";
 import Behavioralawareness from "./pages/Behavioralawareness";
 import Skillsbehindstudy from "./pages/Skillsbehindstudy";
+import Completepackage from "./pages/Completepackage";
 import PageLoader from "./pages/Pageloader";
 import LoginPage from "./pages/LoginPage";
 import DashboardLayout from "./admin/dashboardlayout/DashboardLayout";
@@ -31,6 +32,7 @@ import PortalSessionsHome from "./portal/pages/sessions/SessionsHome";
 import PortalSessionDetailPage from "./portal/pages/sessions/SessionDetailPage";
 import PortalSettingsHome from "./portal/pages/settings/SettingsHome";
 import PaymentReturnPage from "./portal/pages/payment/PaymentReturnPage";
+import FullPaymentPage from "./portal/pages/payment/FullPaymentPage";
 import LogoSnowfall from "./components/Logosnowfall";
 import { getDashboardHome, roleMatches } from "./utils/roles";
 
@@ -101,6 +103,7 @@ const App = () => {
         <Route path="/behavioural-awareness" element={<Behavioralawareness />} />
         <Route path="/relationship-awareness" element={<RelationshipAwareness />} />
         <Route path="/talent-awareness" element={<Talentawareness />} />
+        <Route path="/complete-package" element={<Completepackage />} />
 
         <Route path="/login" element={<RedirectIfLoggedIn />} />
 
@@ -306,6 +309,14 @@ const App = () => {
             element={
               <RequireAuth role="user">
                 <PortalSettingsHome />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="payment/full"
+            element={
+              <RequireAuth role="user">
+                <FullPaymentPage />
               </RequireAuth>
             }
           />

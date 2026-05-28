@@ -14,6 +14,7 @@ const initialValue = {
   venueProfile: null,
   canAccessDashboard: false,
   advancePayment: null,
+  fullPayment: null,
   counselingLevel: "",
 };
 

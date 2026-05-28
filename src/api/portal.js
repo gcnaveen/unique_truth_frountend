@@ -72,6 +72,22 @@ export const getPortalAudioDownload = async (token, enquiryId, audioId) => {
   return response.data;
 };
 
+export const getPortalEnquiryReports = async (token, enquiryId) => {
+  const response = await portalClient.get(
+    `/portal/enquiries/${enquiryId}/reports`,
+    authHeaders(token),
+  );
+  return response.data;
+};
+
+export const getPortalReportDownload = async (token, enquiryId, reportId) => {
+  const response = await portalClient.get(
+    `/portal/enquiries/${enquiryId}/reports/${reportId}/download`,
+    authHeaders(token),
+  );
+  return response.data;
+};
+
 export const getPortalDataExport = async (token) => {
   const response = await portalClient.get("/portal/me/data-export", {
     ...authHeaders(token),
@@ -91,5 +107,32 @@ export const initiatePortalAdvancePayment = async (token, payload) => {
     payload,
     authHeaders(token),
   );
+  return response.data;
+};
+
+/** Full program payment — unlocks audio/report downloads for a converted enquiry. */
+export const initiatePortalFullPayment = async (token, payload) => {
+  const response = await portalClient.post(
+    "/portal/payments/full/initiate",
+    payload,
+    authHeaders(token),
+  );
+  return response.data;
+};
+
+export const getPortalAdvancePaymentStatus = async (token, params = {}) => {
+  const response = await portalClient.get("/portal/payments/advance/status", {
+    ...authHeaders(token),
+    params,
+  });
+  return response.data;
+};
+
+/** Per-enquiry full payment status — includes fullPayment.canDownloadMedia. */
+export const getPortalFullPaymentStatus = async (token, enquiryId, params = {}) => {
+  const response = await portalClient.get("/portal/payments/full/status", {
+    ...authHeaders(token),
+    params: { enquiryId, ...params },
+  });
   return response.data;
 };

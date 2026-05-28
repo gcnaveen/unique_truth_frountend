@@ -73,8 +73,8 @@ const AssignedUsersHome = () => {
             Assigned users
           </h1>
           <p className="mt-1 text-sm text-white/90 md:text-base">
-            Users converted by sales and assigned to you. Book sessions, upload fingerprint
-            and audio, and view history.
+            Users converted by sales and assigned to you. Book sessions, upload fingerprint,
+            audio, and reports, and view history.
           </p>
         </div>
 

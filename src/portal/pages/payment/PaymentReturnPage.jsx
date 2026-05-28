@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { getPortalMe } from "../../../api/portal";
+import { getPortalFullPaymentStatus, getPortalMe } from "../../../api/portal";
 import { updateUser } from "../../../reducers/user";
 import {
   canAccessPortalDashboard,
   getAdvancePaymentStatus,
+  isFullPaymentCompleted,
   pickPortalAccessFromLogin,
   unwrapPortalPayload,
 } from "../../utils/access";
+import { clearPaymentReturn, pickFullPaymentFromStatus, readPaymentReturn } from "../../utils/payment";
 
 export default function PaymentReturnPage() {
   const dispatch = useDispatch();
@@ -25,8 +27,21 @@ export default function PaymentReturnPage() {
     }
     const verify = async () => {
       try {
-        const response = await getPortalMe(access_token);
-        const data = unwrapPortalPayload(response);
+        const stored = readPaymentReturn();
+        const paymentType = searchParams.get("type") || stored.type || "advance";
+        const enquiryId = searchParams.get("enquiryId") || stored.enquiryId || "";
+        const returnTo =
+          searchParams.get("returnTo") ||
+          stored.returnTo ||
+          (enquiryId
+            ? `/portal/dashboard/enquiries/${enquiryId}`
+            : "/portal/dashboard/enquiries");
+
+        const urlHint = searchParams.get("status") || searchParams.get("paymentStatus");
+        const merchantOrderId = searchParams.get("merchantOrderId");
+
+        const meResponse = await getPortalMe(access_token);
+        const data = unwrapPortalPayload(meResponse);
         const access = pickPortalAccessFromLogin(data);
         dispatch(
           updateUser({
@@ -35,19 +50,49 @@ export default function PaymentReturnPage() {
             counselingLevel: access.counselingLevel,
           }),
         );
-        const paymentStatus = getAdvancePaymentStatus(data);
-        const urlHint = searchParams.get("status") || searchParams.get("paymentStatus");
+
+        if (paymentType === "full" && enquiryId) {
+          const statusParams = merchantOrderId ? { merchantOrderId } : {};
+          const fullStatusRes = await getPortalFullPaymentStatus(
+            access_token,
+            enquiryId,
+            statusParams,
+          );
+          const fullData = unwrapPortalPayload(fullStatusRes);
+          dispatch(updateUser({ fullPayment: pickFullPaymentFromStatus(fullData) }));
+
+          if (isFullPaymentCompleted(fullData)) {
+            clearPaymentReturn();
+            setStatus("success");
+            setMessage("Payment confirmed. Your downloads are now unlocked.");
+            setTimeout(() => navigate(returnTo, { replace: true }), 1500);
+            return;
+          }
+          if (urlHint === "failed" || urlHint === "failure") {
+            setStatus("failed");
+            setMessage("Payment was not completed. You can try again from your enquiry.");
+          } else {
+            setStatus("pending");
+            setMessage(
+              "We are confirming your full payment. Refresh in a moment or return to your enquiry.",
+            );
+          }
+          return;
+        }
+
+        const advanceStatus = getAdvancePaymentStatus(data);
         if (canAccessPortalDashboard(data)) {
+          clearPaymentReturn();
           setStatus("success");
           setMessage("Payment confirmed. Opening your portal…");
-          setTimeout(() => navigate("/portal/dashboard", { replace: true }), 1500);
+          setTimeout(() => navigate(returnTo, { replace: true }), 1500);
         } else if (urlHint === "failed" || urlHint === "failure") {
           setStatus("failed");
           setMessage("Payment was not completed. You can try again from the portal.");
         } else {
           setStatus("pending");
           setMessage(
-            paymentStatus === "pending"
+            advanceStatus === "pending"
               ? "We are still confirming your payment. Refresh in a moment or use the button below."
               : "Payment status is being updated.",
           );
@@ -59,6 +104,14 @@ export default function PaymentReturnPage() {
     };
     verify();
   }, [access_token, dispatch, navigate, searchParams]);
+
+  const stored = readPaymentReturn();
+  const paymentType = searchParams.get("type") || stored.type || "advance";
+  const enquiryId = searchParams.get("enquiryId") || stored.enquiryId || "";
+  const backTo =
+    searchParams.get("returnTo") ||
+    stored.returnTo ||
+    (enquiryId ? `/portal/dashboard/enquiries/${enquiryId}` : "/portal/dashboard/enquiries");
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#0a1f14] px-4 text-white">
@@ -76,10 +129,10 @@ export default function PaymentReturnPage() {
         <p className="mt-3 text-sm text-white/75">{message}</p>
         {status !== "checking" && status !== "success" ? (
           <Link
-            to="/portal/dashboard"
+            to={paymentType === "full" ? backTo : "/portal/dashboard"}
             className="mt-6 inline-flex rounded-xl bg-linear-to-r from-[#c9a86c] to-[#5eead4] px-5 py-2.5 text-sm font-bold text-[#0f2e1a]"
           >
-            Back to portal
+            {paymentType === "full" ? "Back to enquiry" : "Back to portal"}
           </Link>
         ) : null}
       </div>

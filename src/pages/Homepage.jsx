@@ -18,6 +18,7 @@ const Homepage = () => {
   const [enquiryModalOpen, setEnquiryModalOpen] = useState(false);
 
   const enquiryOptions = [
+    { label: "Complete Package (All Services)", path: "/complete-package" },
     { label: "Skills Behind Studies", path: "/skills-behind-studies" },
     { label: "Behavioral Awareness", path: "/behavioural-awareness" },
     { label: "Relationship Awareness", path: "/relationship-awareness" },

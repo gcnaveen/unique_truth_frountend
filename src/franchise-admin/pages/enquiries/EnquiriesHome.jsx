@@ -37,6 +37,7 @@ const EnquiriesHome = () => {
   const [loading, setLoading] = useState(true);
   const [assigningId, setAssigningId] = useState("");
   const [salesByEnquiry, setSalesByEnquiry] = useState({});
+  const [assignModeByEnquiry, setAssignModeByEnquiry] = useState({});
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -96,19 +97,32 @@ const EnquiriesHome = () => {
 
   const handleAssign = async (enquiryId) => {
     if (!enquiryId) return;
+    const mode = assignModeByEnquiry[enquiryId] || "auto";
     const salesId = salesByEnquiry[enquiryId] || "";
+    if (mode === "manual" && !salesId) {
+      setError("Select a sales user for manual assignment.");
+      return;
+    }
     try {
       setAssigningId(enquiryId);
       setError("");
       setSuccess("");
-      const body = salesId ? { salesId } : {};
+      const body =
+        mode === "manual"
+          ? { assignmentMode: "manual", salesId }
+          : { assignmentMode: "auto" };
       await assignFranchiseAdminEnquiry(access_token, enquiryId, body);
       setSuccess(
-        salesId
+        mode === "manual"
           ? "Enquiry assigned to the selected sales person."
           : "Enquiry auto-assigned to the least-loaded sales person in your branch.",
       );
       setSalesByEnquiry((prev) => {
+        const next = { ...prev };
+        delete next[enquiryId];
+        return next;
+      });
+      setAssignModeByEnquiry((prev) => {
         const next = { ...prev };
         delete next[enquiryId];
         return next;
@@ -216,6 +230,21 @@ const EnquiriesHome = () => {
                       {row?.preferredBranchName || row?.preferredFranchiseId || "—"}
                     </td>
                     <td className="border-r border-white/10 px-3 py-4 text-center align-middle">
+                      <div className="mb-2">
+                        <select
+                          value={assignModeByEnquiry[enquiryId] || "auto"}
+                          onChange={(e) =>
+                            setAssignModeByEnquiry((prev) => ({
+                              ...prev,
+                              [enquiryId]: e.target.value,
+                            }))
+                          }
+                          className="w-full max-w-[200px] rounded-lg border border-white/25 bg-[#133726] px-2 py-1.5 text-xs text-white outline-none focus:border-[#5eead4]"
+                        >
+                          <option value="auto">Auto</option>
+                          <option value="manual">Manual</option>
+                        </select>
+                      </div>
                       <select
                         value={salesByEnquiry[enquiryId] ?? ""}
                         onChange={(e) =>
@@ -224,9 +253,14 @@ const EnquiriesHome = () => {
                             [enquiryId]: e.target.value,
                           }))
                         }
+                        disabled={(assignModeByEnquiry[enquiryId] || "auto") !== "manual"}
                         className="w-full max-w-[200px] rounded-lg border border-white/25 bg-[#133726] px-2 py-2 text-xs text-white outline-none focus:border-[#5eead4]"
                       >
-                        <option value="">Auto (least loaded)</option>
+                        <option value="">
+                          {(assignModeByEnquiry[enquiryId] || "auto") === "manual"
+                            ? "Select sales user"
+                            : "Auto (least loaded)"}
+                        </option>
                         {salesTeam.map((member) => (
                           <option key={getUserId(member)} value={getUserId(member)}>
                             {getUserLabel(member)}
@@ -241,7 +275,11 @@ const EnquiriesHome = () => {
                         onClick={() => handleAssign(enquiryId)}
                         className={`${rowActionButtonClass} border-[#5eead4]/50 bg-[#5eead4]/15 text-[#a7f3d0] hover:bg-[#5eead4]/25 disabled:opacity-50`}
                       >
-                        {isAssigning ? "Assigning…" : "Assign"}
+                        {isAssigning
+                          ? "Assigning…"
+                          : (assignModeByEnquiry[enquiryId] || "auto") === "manual"
+                            ? "Assign (Manual)"
+                            : "Assign (Auto)"}
                       </button>
                     </td>
                   </tr>
