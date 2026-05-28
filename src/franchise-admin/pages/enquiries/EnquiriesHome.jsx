@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import {
   assignFranchiseAdminEnquiry,
+  getFranchiseAdminEnquiryById,
+  getFranchiseAdminEnquiries,
   getFranchiseAdminTeam,
-  getFranchiseAdminUnassignedEnquiries,
 } from "../../../api/franchiseAdmin";
 
 const normalizePagedItems = (response) => {
@@ -26,6 +27,9 @@ const formatService = (value) =>
   String(value || "")
     .replace(/_/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase()) || "—";
+
+const getAssignedSalesId = (row) =>
+  row?.salesId || row?.assignedSalesId || row?.assignedTo?._id || row?.assignedTo?.id || "";
 
 const EnquiriesHome = () => {
   const { access_token } = useSelector((state) => state.user.value);
@@ -70,15 +74,27 @@ const EnquiriesHome = () => {
       setLoading(true);
       setError("");
       const skip = (currentPage - 1) * pageLimit;
-      const response = await getFranchiseAdminUnassignedEnquiries(access_token, {
+      const response = await getFranchiseAdminEnquiries(access_token, {
         limit: pageLimit,
         skip,
       });
       const { items, total } = normalizePagedItems(response);
-      setEnquiries(items);
+      const detailResults = await Promise.allSettled(
+        items.map(async (item) => {
+          const enquiryId = getEnquiryId(item);
+          if (!enquiryId) return item;
+          const detailResponse = await getFranchiseAdminEnquiryById(access_token, enquiryId);
+          const detail = detailResponse?.data ?? detailResponse ?? {};
+          return { ...item, ...detail };
+        }),
+      );
+      const hydratedItems = detailResults.map((result, index) =>
+        result.status === "fulfilled" ? result.value : items[index],
+      );
+      setEnquiries(hydratedItems);
       setTotalCount(total);
     } catch (fetchError) {
-      setError(fetchError?.response?.data?.message || "Failed to load unassigned enquiries.");
+      setError(fetchError?.response?.data?.message || "Failed to load franchise enquiries.");
       setEnquiries([]);
     } finally {
       setLoading(false);
@@ -143,14 +159,14 @@ const EnquiriesHome = () => {
       <div className="mb-6 flex flex-col gap-2">
         <h1 className="text-2xl font-semibold tracking-tight text-white md:text-3xl">Enquiries</h1>
         <p className="text-sm text-white/90 md:text-base">
-          Unassigned enquiries for your branch. Assign to a sales person or use auto-assign.
+          Enquiries submitted for your franchise.
         </p>
       </div>
 
       <div className="mb-4 rounded-xl border border-white/20 bg-white/10 p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-white/70">Queue</p>
         <p className="mt-1 text-2xl font-semibold text-white">{loading ? "…" : totalCount}</p>
-        <p className="text-sm text-white/80">Unassigned in your franchise</p>
+        <p className="text-sm text-white/80">Total in your franchise</p>
       </div>
 
       {success ? (
@@ -184,7 +200,7 @@ const EnquiriesHome = () => {
                 Preferred branch
               </th>
               <th className="w-[20%] border-r border-white/15 px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
-                Assign to sales
+                Sales assignment
               </th>
               <th className="w-[15%] px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
                 Action
@@ -201,13 +217,15 @@ const EnquiriesHome = () => {
             ) : enquiries.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-4 py-8 text-center text-sm text-white">
-                  No unassigned enquiries right now.
+                  No enquiries for your franchise right now.
                 </td>
               </tr>
             ) : (
               enquiries.map((row, index) => {
                 const enquiryId = getEnquiryId(row);
                 const isAssigning = assigningId === enquiryId;
+                const assignedSalesId = getAssignedSalesId(row);
+                const isAlreadyAssigned = Boolean(assignedSalesId);
                 return (
                   <tr
                     key={enquiryId || `e-${index}`}
@@ -230,52 +248,62 @@ const EnquiriesHome = () => {
                       {row?.preferredBranchName || row?.preferredFranchiseId || "—"}
                     </td>
                     <td className="border-r border-white/10 px-3 py-4 text-center align-middle">
-                      <div className="mb-2">
-                        <select
-                          value={assignModeByEnquiry[enquiryId] || "auto"}
-                          onChange={(e) =>
-                            setAssignModeByEnquiry((prev) => ({
-                              ...prev,
-                              [enquiryId]: e.target.value,
-                            }))
-                          }
-                          className="w-full max-w-[200px] rounded-lg border border-white/25 bg-[#133726] px-2 py-1.5 text-xs text-white outline-none focus:border-[#5eead4]"
-                        >
-                          <option value="auto">Auto</option>
-                          <option value="manual">Manual</option>
-                        </select>
-                      </div>
-                      <select
-                        value={salesByEnquiry[enquiryId] ?? ""}
-                        onChange={(e) =>
-                          setSalesByEnquiry((prev) => ({
-                            ...prev,
-                            [enquiryId]: e.target.value,
-                          }))
-                        }
-                        disabled={(assignModeByEnquiry[enquiryId] || "auto") !== "manual"}
-                        className="w-full max-w-[200px] rounded-lg border border-white/25 bg-[#133726] px-2 py-2 text-xs text-white outline-none focus:border-[#5eead4]"
-                      >
-                        <option value="">
-                          {(assignModeByEnquiry[enquiryId] || "auto") === "manual"
-                            ? "Select sales user"
-                            : "Auto (least loaded)"}
-                        </option>
-                        {salesTeam.map((member) => (
-                          <option key={getUserId(member)} value={getUserId(member)}>
-                            {getUserLabel(member)}
-                          </option>
-                        ))}
-                      </select>
+                      {isAlreadyAssigned ? (
+                        <span className="inline-flex rounded-md border border-emerald-300/40 bg-emerald-500/15 px-2 py-1 text-xs font-semibold text-emerald-100">
+                          Assigned
+                        </span>
+                      ) : (
+                        <>
+                          <div className="mb-2">
+                            <select
+                              value={assignModeByEnquiry[enquiryId] || "auto"}
+                              onChange={(e) =>
+                                setAssignModeByEnquiry((prev) => ({
+                                  ...prev,
+                                  [enquiryId]: e.target.value,
+                                }))
+                              }
+                              className="w-full max-w-[200px] rounded-lg border border-white/25 bg-[#133726] px-2 py-1.5 text-xs text-white outline-none focus:border-[#5eead4]"
+                            >
+                              <option value="auto">Auto</option>
+                              <option value="manual">Manual</option>
+                            </select>
+                          </div>
+                          <select
+                            value={salesByEnquiry[enquiryId] ?? ""}
+                            onChange={(e) =>
+                              setSalesByEnquiry((prev) => ({
+                                ...prev,
+                                [enquiryId]: e.target.value,
+                              }))
+                            }
+                            disabled={(assignModeByEnquiry[enquiryId] || "auto") !== "manual"}
+                            className="w-full max-w-[200px] rounded-lg border border-white/25 bg-[#133726] px-2 py-2 text-xs text-white outline-none focus:border-[#5eead4]"
+                          >
+                            <option value="">
+                              {(assignModeByEnquiry[enquiryId] || "auto") === "manual"
+                                ? "Select sales user"
+                                : "Auto (least loaded)"}
+                            </option>
+                            {salesTeam.map((member) => (
+                              <option key={getUserId(member)} value={getUserId(member)}>
+                                {getUserLabel(member)}
+                              </option>
+                            ))}
+                          </select>
+                        </>
+                      )}
                     </td>
                     <td className="px-3 py-4 text-center align-middle">
                       <button
                         type="button"
-                        disabled={isAssigning}
+                        disabled={isAssigning || isAlreadyAssigned}
                         onClick={() => handleAssign(enquiryId)}
                         className={`${rowActionButtonClass} border-[#5eead4]/50 bg-[#5eead4]/15 text-[#a7f3d0] hover:bg-[#5eead4]/25 disabled:opacity-50`}
                       >
-                        {isAssigning
+                        {isAlreadyAssigned
+                          ? "Already assigned"
+                          : isAssigning
                           ? "Assigning…"
                           : (assignModeByEnquiry[enquiryId] || "auto") === "manual"
                             ? "Assign (Manual)"

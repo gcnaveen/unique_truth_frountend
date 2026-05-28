@@ -28,14 +28,21 @@ const initialUserForm = {
 };
 
 const uiRoleToApiRole = (value) => {
-  if (value === "admin") return "franchise_admin";
+  if (value === "admin" || value === "franchise_admin") return "franchise_admin";
   if (value === "sales_person") return "sales";
   if (value === "counsellor") return "counsellor";
   return value || "franchise_admin";
 };
 
 const apiRoleToUiRole = (value) => {
-  if (value === "franchise_admin") return "admin";
+  if (
+    value === "franchise_admin" ||
+    value === "franchiseadmin" ||
+    value === "franchise-admin" ||
+    value === "admin"
+  ) {
+    return "admin";
+  }
   if (value === "sales_person" || value === "salesperson" || value === "sales") {
     return "sales_person";
   }
@@ -60,6 +67,7 @@ const UsersHome = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loginCredentials, setLoginCredentials] = useState(null);
+  const [roleFilter, setRoleFilter] = useState("all");
 
   const normalizeList = (response) => {
     const payload = response?.data ?? response;
@@ -95,10 +103,14 @@ const UsersHome = () => {
     try {
       setLoading(true);
       setError("");
-      const usersResponse = await getAdminUsers(access_token, {
+      const params = {
         page: currentPage,
         limit: pageLimit,
-      });
+      };
+      if (roleFilter !== "all") {
+        params.role = uiRoleToApiRole(roleFilter);
+      }
+      const usersResponse = await getAdminUsers(access_token, params);
       const usersList = normalizeList(usersResponse);
       const meta = normalizeMeta(usersResponse);
       setUsers(usersList);
@@ -126,11 +138,15 @@ const UsersHome = () => {
 
   useEffect(() => {
     if (access_token) loadUsers();
-  }, [access_token, currentPage, pageLimit]);
+  }, [access_token, currentPage, pageLimit, roleFilter]);
 
   useEffect(() => {
     if (access_token) loadFranchises();
   }, [access_token]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [roleFilter]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -331,6 +347,23 @@ const UsersHome = () => {
             </button>
           )}
         </div>
+        {!showCreateView ? (
+          <div className="mt-2 flex items-center gap-2">
+            <label className="text-xs font-semibold uppercase tracking-wide text-white/75">
+              Filter by role
+            </label>
+            <select
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+              className="rounded-lg border border-white/25 bg-white/10 px-3 py-2 text-xs font-semibold text-white outline-none"
+            >
+              <option value="all">All roles</option>
+              <option value="admin">Franchise Admin</option>
+              <option value="sales_person">Sales Person</option>
+              <option value="counsellor">Counsellor</option>
+            </select>
+          </div>
+        ) : null}
       </div>
 
       <UsersStatsCard loading={loading} totalUsers={totalUsers} />

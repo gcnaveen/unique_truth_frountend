@@ -41,12 +41,30 @@ export const createFranchiseAdminUser = async (token, payload) => {
   return response.data;
 };
 
+/** GET /franchise-admin/enquiries */
+export const getFranchiseAdminEnquiries = async (token, params = {}) => {
+  const response = await franchiseAdminClient.get("/franchise-admin/enquiries", {
+    ...authHeaders(token),
+    params,
+  });
+  return response.data;
+};
+
 /** GET /franchise-admin/enquiries/unassigned */
 export const getFranchiseAdminUnassignedEnquiries = async (token, params = {}) => {
   const response = await franchiseAdminClient.get("/franchise-admin/enquiries/unassigned", {
     ...authHeaders(token),
     params,
   });
+  return response.data;
+};
+
+/** GET /franchise-admin/enquiries/{enquiryId} */
+export const getFranchiseAdminEnquiryById = async (token, enquiryId) => {
+  const response = await franchiseAdminClient.get(
+    `/franchise-admin/enquiries/${enquiryId}`,
+    authHeaders(token),
+  );
   return response.data;
 };
 

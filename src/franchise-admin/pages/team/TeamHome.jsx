@@ -4,6 +4,7 @@ import {
   createFranchiseAdminUser,
   getFranchiseAdminTeam,
 } from "../../../api/franchiseAdmin";
+import { getCounselingLevels } from "../../../api/publicPortal";
 import CreateFranchiseTeamUserForm from "./components/CreateFranchiseTeamUserForm";
 import FranchiseTeamRoleSelector from "./components/FranchiseTeamRoleSelector";
 import TeamStatsCard from "./components/TeamStatsCard";
@@ -12,6 +13,7 @@ import {
   normalizeLoginEmail,
   validatePasswordForApi,
 } from "../../../utils/authConstants";
+import { COUNSELING_LEVEL_META, getCounselingLevelLabel } from "../../../portal/utils/format";
 
 const initialUserForm = {
   email: "",
@@ -19,6 +21,7 @@ const initialUserForm = {
   password: "",
   territory: "",
   speciality: "",
+  counselingLevel: "",
 };
 
 const ROLE_FILTER_OPTIONS = [
@@ -28,6 +31,29 @@ const ROLE_FILTER_OPTIONS = [
   { value: "operation_team", label: "Operation team" },
   { value: "user", label: "User" },
 ];
+
+const normalizeCounselingLevels = (response) => {
+  const payload = response?.data ?? response ?? {};
+  const raw = payload?.levels ?? payload?.items ?? payload;
+
+  if (Array.isArray(raw)) {
+    return raw
+      .map((item) =>
+        typeof item === "string"
+          ? { id: item, label: getCounselingLevelLabel(item) }
+          : {
+              id: item?.id || item?.value || item?.level,
+              label: item?.label || getCounselingLevelLabel(item?.id || item?.value || item?.level),
+            },
+      )
+      .filter((item) => item.id);
+  }
+
+  return Object.keys(COUNSELING_LEVEL_META).map((id) => ({
+    id,
+    label: COUNSELING_LEVEL_META[id].label,
+  }));
+};
 
 const getRoleLabel = (role) => {
   const map = {
@@ -48,12 +74,19 @@ const TeamHome = () => {
   const [team, setTeam] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageLimit] = useState(10);
+  const [counselingLevels, setCounselingLevels] = useState([]);
+  const [loadingLevels, setLoadingLevels] = useState(false);
   const [totalUsers, setTotalUsers] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  const buildInitialUserForm = () => ({
+    ...initialUserForm,
+    counselingLevel: counselingLevels[0]?.id || "",
+  });
 
   const getUserId = (item) => item?._id || item?.id || "";
 
@@ -91,6 +124,33 @@ const TeamHome = () => {
     if (access_token) loadTeam();
   }, [access_token, currentPage, pageLimit, roleFilter]);
 
+  useEffect(() => {
+    const loadCounselingLevels = async () => {
+      try {
+        setLoadingLevels(true);
+        const response = await getCounselingLevels();
+        const normalized = normalizeCounselingLevels(response);
+        setCounselingLevels(normalized);
+        setUserForm((prev) => ({
+          ...prev,
+          counselingLevel:
+            prev.counselingLevel || normalized[0]?.id || prev.counselingLevel,
+        }));
+      } catch {
+        const fallback = normalizeCounselingLevels(null);
+        setCounselingLevels(fallback);
+        setUserForm((prev) => ({
+          ...prev,
+          counselingLevel: prev.counselingLevel || fallback[0]?.id || "",
+        }));
+      } finally {
+        setLoadingLevels(false);
+      }
+    };
+
+    loadCounselingLevels();
+  }, []);
+
   const handleChange = (event) => {
     const { name, value } = event.target;
     setUserForm((prev) => ({ ...prev, [name]: value }));
@@ -100,6 +160,10 @@ const TeamHome = () => {
     event.preventDefault();
     if (role === "counsellor" && !userForm.speciality?.trim()) {
       setError("Speciality is required for counsellor role.");
+      return;
+    }
+    if (role === "counsellor" && !userForm.counselingLevel) {
+      setError("Counseling level is required for counsellor role.");
       return;
     }
 
@@ -127,6 +191,7 @@ const TeamHome = () => {
       }
       if (role === "counsellor") {
         payload.speciality = userForm.speciality.trim();
+        payload.counselingLevel = userForm.counselingLevel;
       }
       if (userForm.password?.trim()) {
         payload.password = userForm.password.trim();
@@ -143,7 +208,7 @@ const TeamHome = () => {
       }
       setSuccess(successMsg);
 
-      setUserForm(initialUserForm);
+      setUserForm(buildInitialUserForm());
       setRole("sales");
       setShowCreateView(false);
       setCurrentPage(1);
@@ -166,7 +231,7 @@ const TeamHome = () => {
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-white md:text-3xl">Team</h1>
             <p className="text-sm text-white/90 md:text-base">
-              Manage users in your franchise — sales, counsellors, operations, and end users.
+              Manage users in your franchise — sales and counsellors.
             </p>
           </div>
           {!showCreateView ? (
@@ -182,7 +247,7 @@ const TeamHome = () => {
               type="button"
               onClick={() => {
                 setShowCreateView(false);
-                setUserForm(initialUserForm);
+                setUserForm(buildInitialUserForm());
                 setError("");
               }}
               className="inline-flex h-10 min-w-32 items-center justify-center rounded-xl border border-white/30 bg-white/15 px-4 text-sm font-semibold text-white hover:bg-white/25"
@@ -212,6 +277,8 @@ const TeamHome = () => {
           <CreateFranchiseTeamUserForm
             role={role}
             userForm={userForm}
+            levels={counselingLevels}
+            loadingLevels={loadingLevels}
             onChange={handleChange}
             onSubmit={handleSubmit}
             submitting={submitting}

@@ -3,6 +3,8 @@ import { MIN_PASSWORD_LENGTH } from "../../../../utils/authConstants";
 const CreateFranchiseTeamUserForm = ({
   role,
   userForm,
+  levels,
+  loadingLevels,
   onChange,
   onSubmit,
   submitting,
@@ -56,14 +58,33 @@ const CreateFranchiseTeamUserForm = ({
           />
         ) : null}
         {showSpeciality ? (
-          <input
-            name="speciality"
-            value={userForm.speciality}
-            onChange={onChange}
-            placeholder="Speciality * (required for counsellor)"
-            required
-            className="md:col-span-2 rounded-lg border border-white/25 bg-white/15 px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/60 focus:border-[#5eead4]"
-          />
+          <>
+            <input
+              name="speciality"
+              value={userForm.speciality}
+              onChange={onChange}
+              placeholder="Speciality * (required for counsellor)"
+              required
+              className="rounded-lg border border-white/25 bg-white/15 px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/60 focus:border-[#5eead4]"
+            />
+            <select
+              name="counselingLevel"
+              value={userForm.counselingLevel}
+              onChange={onChange}
+              required
+              disabled={loadingLevels}
+              className="rounded-lg border border-white/25 bg-[#133726] px-3 py-2.5 text-sm text-white outline-none focus:border-[#5eead4] disabled:opacity-60"
+            >
+              <option value="" disabled>
+                {loadingLevels ? "Loading counseling levels..." : "Select counseling level *"}
+              </option>
+              {levels.map((level) => (
+                <option key={level.id} value={level.id}>
+                  {level.label}
+                </option>
+              ))}
+            </select>
+          </>
         ) : null}
       </div>
 

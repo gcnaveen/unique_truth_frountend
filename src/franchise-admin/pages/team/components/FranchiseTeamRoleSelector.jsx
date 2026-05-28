@@ -1,8 +1,6 @@
 const ROLES = [
   { id: "sales", label: "Sales" },
   { id: "counsellor", label: "Counsellor" },
-  { id: "operation_team", label: "Operation team" },
-  { id: "user", label: "User" },
 ];
 
 const FranchiseTeamRoleSelector = ({ role, setRole }) => (
