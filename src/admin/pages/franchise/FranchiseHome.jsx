@@ -9,6 +9,7 @@ import {
 } from "../../../api/franchise";
 import CreateFranchiseForm from "./components/CreateFranchiseForm";
 import FranchiseStatsCard from "./components/FranchiseStatsCard";
+import { useAppAlert } from "../../../context/AppAlertContext";
 
 const initialFranchiseForm = {
   name: "",
@@ -21,6 +22,7 @@ const initialFranchiseForm = {
 };
 
 const FranchiseHome = () => {
+  const { confirm } = useAppAlert();
   const { access_token } = useSelector((state) => state.user.value);
   const [showCreateView, setShowCreateView] = useState(false);
   const [franchiseForm, setFranchiseForm] = useState(initialFranchiseForm);
@@ -175,7 +177,12 @@ const FranchiseHome = () => {
 
   const handleDeleteFranchise = async (franchiseId) => {
     if (!franchiseId) return;
-    const isConfirmed = window.confirm("Are you sure you want to delete this franchise?");
+    const isConfirmed = await confirm({
+      title: "Delete franchise",
+      message: "Are you sure you want to delete this franchise? This cannot be undone.",
+      confirmLabel: "Delete",
+      variant: "danger",
+    });
     if (!isConfirmed) return;
     try {
       setError("");

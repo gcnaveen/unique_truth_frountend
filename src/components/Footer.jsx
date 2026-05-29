@@ -101,6 +101,7 @@ const exploreLinks = [
   { label: "About", href: "#about" },
   { label: "Growth", href: "#growth" },
   { label: "Services", href: "#services" },
+  { label: "Career", href: "#career" },
   { label: "Contact", href: "#contact" },
 ];
 

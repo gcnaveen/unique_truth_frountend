@@ -7,6 +7,7 @@ import Ourservices from "../sections/Ourservices";
 import CustomisedServices from "../sections/CustomisedServices";
 import NatureSection from "../sections/Naturesection";
 import Clientreviews from "../sections/Clientreviews";
+import Career from "../sections/Career";
 import Contactus from "../sections/Contactus";
 import Footer from "../components/Footer";
 import Personalizedservices from "../sections/Personalizedservices";
@@ -64,6 +65,7 @@ const Homepage = () => {
       {/* <NatureSection /> */}
       {/* <Logomarquee /> */}
       <Clientreviews />
+      <Career />
       <Contactus />
       <Footer />
 

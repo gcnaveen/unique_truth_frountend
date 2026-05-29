@@ -17,6 +17,7 @@ import {
   validatePasswordForApi,
 } from "../../../utils/authConstants";
 import { parseUserProvisionResponse } from "../../../utils/userProvision";
+import { useAppAlert } from "../../../context/AppAlertContext";
 
 const initialUserForm = {
   email: "",
@@ -51,6 +52,7 @@ const apiRoleToUiRole = (value) => {
 };
 
 const UsersHome = () => {
+  const { confirm } = useAppAlert();
   const { access_token } = useSelector((state) => state.user.value);
   const [showCreateView, setShowCreateView] = useState(false);
   const [userForm, setUserForm] = useState(initialUserForm);
@@ -295,9 +297,12 @@ const UsersHome = () => {
   const handleToggleBlockUser = async (userId, isActive) => {
     if (!userId) return;
     const nextIsActive = !isActive;
-    const isConfirmed = window.confirm(
-      `Are you sure you want to ${nextIsActive ? "unblock" : "block"} this user?`
-    );
+    const isConfirmed = await confirm({
+      title: nextIsActive ? "Unblock user" : "Block user",
+      message: `Are you sure you want to ${nextIsActive ? "unblock" : "block"} this user?`,
+      confirmLabel: nextIsActive ? "Unblock" : "Block",
+      variant: nextIsActive ? "default" : "danger",
+    });
     if (!isConfirmed) return;
     try {
       setError("");

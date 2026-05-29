@@ -9,6 +9,7 @@ import userReducer from "./reducers/user";
 import { logout } from "./reducers/user";
 import { BrowserRouter } from "react-router-dom";
 import AuthInitializer from "./components/AuthInitializer";
+import { AppAlertProvider } from "./context/AppAlertContext";
 import axios from "axios";
 
 const STORAGE_KEY = "uniquetruth_user";
@@ -63,7 +64,9 @@ createRoot(document.getElementById("root")).render(
   <Provider store={store}>
     <BrowserRouter>
       <AuthInitializer>
-        <App />
+        <AppAlertProvider>
+          <App />
+        </AppAlertProvider>
       </AuthInitializer>
     </BrowserRouter>
   </Provider>,

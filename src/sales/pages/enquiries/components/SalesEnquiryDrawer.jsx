@@ -4,6 +4,7 @@ import {
   getSalesEnquiryById,
   updateSalesEnquiryStatus,
 } from "../../../../api/sales";
+import { useAppAlert } from "../../../../context/AppAlertContext";
 
 const formatDateTime = (value) => {
   if (!value) return "—";
@@ -34,6 +35,7 @@ export default function SalesEnquiryDrawer({
   onClose,
   onUpdated,
 }) {
+  const { confirm } = useAppAlert();
   const [enquiry, setEnquiry] = useState(null);
   const [loading, setLoading] = useState(false);
   const [note, setNote] = useState("");
@@ -101,7 +103,13 @@ export default function SalesEnquiryDrawer({
         "Mark as converted? The user will be auto-assigned to a counsellor in your franchise.",
       closed: "Mark this enquiry as closed?",
     };
-    if (!window.confirm(confirmMessages[status] || "Update status?")) return;
+    const isConfirmed = await confirm({
+      title: "Update enquiry",
+      message: confirmMessages[status] || "Update status?",
+      confirmLabel: "Update",
+      variant: status === "closed" ? "danger" : "default",
+    });
+    if (!isConfirmed) return;
 
     try {
       setSubmitting(true);

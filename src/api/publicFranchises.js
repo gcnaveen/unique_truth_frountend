@@ -8,6 +8,12 @@ const publicClient = axios.create({
   },
 });
 
+/** GET /public/franchises — list franchise branches */
+export const getPublicFranchises = async (params = {}) => {
+  const response = await publicClient.get("/public/franchises", { params });
+  return response.data;
+};
+
 /**
  * GET /public/franchises/nearest — suggest nearest branches by coordinates.
  * Tries `latitude`/`longitude` first, then `lat`/`lng` if the server returns 400/422.

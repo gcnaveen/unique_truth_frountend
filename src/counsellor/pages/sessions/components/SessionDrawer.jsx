@@ -9,8 +9,10 @@ import {
   formatDateTime,
   formatLabel,
 } from "../../../utils/format";
+import { useAppAlert } from "../../../../context/AppAlertContext";
 
 export default function SessionDrawer({ sessionId, accessToken, open, onClose, onUpdated }) {
+  const { confirm } = useAppAlert();
   const [session, setSession] = useState(null);
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
@@ -76,7 +78,12 @@ export default function SessionDrawer({ sessionId, accessToken, open, onClose, o
       cancelled: "Cancel this session?",
       no_show: "Mark as no show?",
     };
-    if (!window.confirm(labels[status] || "Update status?")) return;
+    const isConfirmed = await confirm({
+      title: "Update session",
+      message: labels[status] || "Update status?",
+      confirmLabel: "Update",
+    });
+    if (!isConfirmed) return;
 
     try {
       setSubmitting(true);
