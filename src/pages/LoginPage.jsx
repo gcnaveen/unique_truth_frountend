@@ -7,9 +7,12 @@ import {
   loginUser,
   pickAuthToken,
   pickAuthUser,
+  pickLoginProfileEdit,
 } from "../api/auth";
 import { login } from "../reducers/user";
 import { pickPortalAccessFromLogin } from "../portal/utils/access";
+import { pickProfileEdit } from "../utils/profileEdit";
+import { pickUserProfilePhotoUrl } from "../utils/profilePhoto";
 import { getDashboardHome, isPortalUser, normalizeAuthRole } from "../utils/roles";
 import { MIN_PASSWORD_LENGTH, normalizeLoginEmail } from "../utils/authConstants";
 
@@ -50,6 +53,11 @@ const LoginPage = () => {
         response?.refresh_token || response?.refreshToken || "";
       const role = normalizeAuthRole(userData?.role || response?.role);
       const portalAccess = pickPortalAccessFromLogin(response, userData);
+      const isPortal = isPortalUser(role);
+      const profileEdit = pickProfileEdit(
+        { profileEdit: pickLoginProfileEdit(response) ?? response?.profileEdit },
+        { isPortalUser: isPortal },
+      );
 
       const authPayload = {
         id: userData?._id || userData?.id || "",
@@ -67,6 +75,8 @@ const LoginPage = () => {
         advancePayment: portalAccess.advancePayment,
         fullPayment: portalAccess.fullPayment,
         counselingLevel: portalAccess.counselingLevel,
+        profilePhotoUrl: pickUserProfilePhotoUrl(userData),
+        profileEdit,
       };
 
       if (!authPayload.access_token) {

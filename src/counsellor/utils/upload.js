@@ -47,6 +47,30 @@ export const buildReportConfirmPayload = (presignPayload, file) => ({
   attestationDataPrincipalConsentObtained: true,
 });
 
+export const buildPortalFingerprintConfirmPayload = (presignPayload, file, options = {}) => {
+  const defaults = presignPayload?.confirmDefaults || {};
+  return {
+    ...buildConfirmPayload(presignPayload, file),
+    consentBiometricProcessing: true,
+    privacyNoticeVersion:
+      options.privacyNoticeVersion ?? defaults.privacyNoticeVersion ?? "1.0",
+  };
+};
+
+export const FINGERPRINT_IMAGE_TYPES = new Set([
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+]);
+
+export const normalizeFingerprintContentType = (file) => {
+  const type = String(file?.type || "").toLowerCase();
+  if (type === "image/jpg") return "image/jpeg";
+  if (FINGERPRINT_IMAGE_TYPES.has(type)) return type;
+  return null;
+};
+
 export const putFileToPresignedUrl = async (uploadUrl, file, extraHeaders = {}) => {
   const response = await fetch(uploadUrl, {
     method: "PUT",

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../../reducers/user";
+import UserAvatar from "../../components/profile/UserAvatar";
 import {
   getDashboardHome,
   isCounsellor,
@@ -118,6 +119,22 @@ const CarrierIcon = ({ size = 20 }) => (
   </svg>
 );
 
+const SettingsIcon = ({ size = 20 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <circle cx="12" cy="12" r="3" />
+    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+  </svg>
+);
+
 const UsersIcon = ({ size = 20 }) => (
   <svg
     width={size}
@@ -157,6 +174,12 @@ const counsellorNavItems = [
     icon: LeadsIcon,
     end: false,
   },
+  {
+    path: "/counsellor/dashboard/settings",
+    label: "Account",
+    icon: SettingsIcon,
+    end: false,
+  },
 ];
 
 const salesNavItems = [
@@ -164,6 +187,12 @@ const salesNavItems = [
     path: "/sales/dashboard/enquiries",
     label: "Enquiries",
     icon: LeadsIcon,
+    end: false,
+  },
+  {
+    path: "/sales/dashboard/settings",
+    label: "Account",
+    icon: SettingsIcon,
     end: false,
   },
 ];
@@ -185,6 +214,12 @@ const franchiseAdminNavItems = [
     path: "/franchise-admin/dashboard/carriers",
     label: "Carriers",
     icon: CarrierIcon,
+    end: false,
+  },
+  {
+    path: "/franchise-admin/dashboard/settings",
+    label: "My profile",
+    icon: SettingsIcon,
     end: false,
   },
 ];
@@ -220,24 +255,18 @@ const adminNavItems = [
     icon: UsersIcon,
     end: false,
   },
+  {
+    path: "/admin/dashboard/settings",
+    label: "Account",
+    icon: SettingsIcon,
+    end: false,
+  },
 ];
 
 // ── Avatar ─────────────────────────────────────────────────────────────────
 
-function Avatar({ name, size = 32 }) {
-  const initial = name ? String(name).trim().charAt(0).toUpperCase() : "A";
-  return (
-    <div
-      className="rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
-      style={{
-        width: size,
-        height: size,
-        background: "linear-gradient(135deg, #7c6fcd, #5ab99c)",
-      }}
-    >
-      {initial}
-    </div>
-  );
+function Avatar({ name, photoUrl, size = 32 }) {
+  return <UserAvatar name={name} photoUrl={photoUrl} size={size} />;
 }
 
 // ── Sidebar NavLink ────────────────────────────────────────────────────────
@@ -296,7 +325,7 @@ export default function DashboardLayout() {
   const [isMobile, setIsMobile] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { name, role } = useSelector((state) => state.user.value);
+  const { name, role, profilePhotoUrl } = useSelector((state) => state.user.value);
   const navItems = isFranchiseAdmin(role)
     ? franchiseAdminNavItems
     : isSales(role)
@@ -399,7 +428,7 @@ export default function DashboardLayout() {
           <div className="px-1 pt-1 mb-3">
             {!collapsed ? (
               <div className="flex items-center gap-2.5 rounded-xl border border-white/15 bg-white/10 p-3">
-                <Avatar name={name} />
+                <Avatar name={name} photoUrl={profilePhotoUrl} />
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-semibold text-white truncate">
                     {name || "User"}
@@ -419,7 +448,7 @@ export default function DashboardLayout() {
               </div>
             ) : (
               <div className="flex justify-center pt-1">
-                <Avatar name={name} />
+                <Avatar name={name} photoUrl={profilePhotoUrl} />
               </div>
             )}
           </div>

@@ -14,6 +14,12 @@ export const getPortalMe = async (token) => {
   return response.data;
 };
 
+/** PATCH /portal/me — name and/or profilePhotoUrl */
+export const patchPortalMe = async (token, payload) => {
+  const response = await portalClient.patch("/portal/me", payload, authHeaders(token));
+  return response.data;
+};
+
 export const getPortalDashboard = async (token) => {
   const response = await portalClient.get("/portal/dashboard", authHeaders(token));
   return response.data;
@@ -134,5 +140,39 @@ export const getPortalFullPaymentStatus = async (token, enquiryId, params = {}) 
     ...authHeaders(token),
     params: { enquiryId, ...params },
   });
+  return response.data;
+};
+
+export const presignPortalFingerprint = async (token, enquiryId, payload = {}) => {
+  const response = await portalClient.post(
+    `/portal/enquiries/${enquiryId}/fingerprint/presign`,
+    payload,
+    authHeaders(token),
+  );
+  return response.data;
+};
+
+export const confirmPortalFingerprint = async (token, enquiryId, payload) => {
+  const response = await portalClient.post(
+    `/portal/enquiries/${enquiryId}/fingerprint/confirm`,
+    payload,
+    authHeaders(token),
+  );
+  return response.data;
+};
+
+export const getPortalFingerprint = async (token, enquiryId) => {
+  const response = await portalClient.get(
+    `/portal/enquiries/${enquiryId}/fingerprint`,
+    authHeaders(token),
+  );
+  return response.data;
+};
+
+export const deletePortalFingerprint = async (token, enquiryId) => {
+  const response = await portalClient.delete(
+    `/portal/enquiries/${enquiryId}/fingerprint`,
+    authHeaders(token),
+  );
   return response.data;
 };

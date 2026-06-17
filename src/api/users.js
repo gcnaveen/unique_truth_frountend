@@ -40,6 +40,16 @@ export const updateAdminUser = async (token, userId, payload) => {
   return response.data;
 };
 
+/** PATCH /admin/users/{userId}/profile-photo */
+export const patchAdminUserProfilePhoto = async (token, userId, payload) => {
+  const response = await usersClient.patch(
+    `/admin/users/${userId}/profile-photo`,
+    payload,
+    authHeaders(token),
+  );
+  return response.data;
+};
+
 export const blockAdminUser = async (token, userId, payload) => {
   const response = await usersClient.patch(
     `/admin/users/${userId}/block`,

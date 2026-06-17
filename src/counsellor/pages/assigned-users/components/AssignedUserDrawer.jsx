@@ -252,6 +252,7 @@ export default function AssignedUserDrawer({
               <AssignedUserMediaPanel
                 enquiryId={resolvedEnquiryId}
                 accessToken={accessToken}
+                fingerprintMeta={detail?.media?.fingerprint ?? null}
               />
             ) : null}
           </>

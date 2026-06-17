@@ -1,26 +1,20 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
+import UserAvatar from "../../components/profile/UserAvatar";
+import { pickUserProfilePhotoUrl } from "../../utils/profilePhoto";
 import { getCounselingLevelLabel } from "../utils/format";
 import { getAdvancePaymentStatus } from "../utils/access";
 
-function ProfileAvatar({ name, size = 40, active = false }) {
-  const initial = name ? String(name).trim().charAt(0).toUpperCase() : "M";
+function ProfileAvatar({ name, photoUrl, size = 40, active = false }) {
   return (
     <div
       className={[
-        "flex shrink-0 items-center justify-center rounded-full font-bold text-[#1a120c] transition ring-2",
+        "shrink-0 rounded-full ring-2 transition",
         active ? "ring-[#c9a86c]/80 shadow-[0_0_20px_rgba(201,168,108,0.35)]" : "ring-white/25",
       ].join(" ")}
-      style={{
-        width: size,
-        height: size,
-        fontSize: size * 0.38,
-        background: "linear-gradient(135deg, #e7c387, #5eead4)",
-      }}
-      aria-hidden
     >
-      {initial}
+      <UserAvatar name={name} photoUrl={photoUrl} size={size} />
     </div>
   );
 }
@@ -36,6 +30,7 @@ export default function PortalProfileMenu({
   const rootRef = useRef(null);
 
   const name = profile?.name || displayName || "Member";
+  const photoUrl = pickUserProfilePhotoUrl(profile);
   const emailLine = profile?.email || email || "";
   const phone = profile?.phoneNumber || profile?.phone || "";
   const level = levelLabel || profile?.counselingLevel;
@@ -75,7 +70,7 @@ export default function PortalProfileMenu({
         aria-haspopup="true"
         aria-label="Open profile menu"
       >
-        <ProfileAvatar name={name} size={36} active={open} />
+        <ProfileAvatar name={name} photoUrl={photoUrl} size={36} active={open} />
         <span className="hidden max-w-[120px] truncate text-sm font-medium text-[rgba(255,248,236,0.9)] sm:inline">
           {name.split(" ")[0]}
         </span>
@@ -104,7 +99,7 @@ export default function PortalProfileMenu({
           >
             <div className="border-b border-white/10 bg-white/[0.04] px-4 py-4">
               <div className="flex items-start gap-3">
-                <ProfileAvatar name={name} size={48} />
+                <ProfileAvatar name={name} photoUrl={photoUrl} size={48} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold text-[#fff8ef]">{name}</p>
                   {emailLine ? (

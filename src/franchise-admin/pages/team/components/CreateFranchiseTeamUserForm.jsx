@@ -10,6 +10,7 @@ const CreateFranchiseTeamUserForm = ({
   submitting,
   title,
   submitLabel,
+  isEditing = false,
 }) => {
   const showTerritory = role === "sales";
   const showSpeciality = role === "counsellor";
@@ -18,7 +19,9 @@ const CreateFranchiseTeamUserForm = ({
     <form onSubmit={onSubmit} className="rounded-xl border border-white/20 bg-white/10 p-5 md:p-6">
       <h2 className="text-lg font-semibold text-white md:text-xl">{title}</h2>
       <p className="mt-1 text-sm text-white/80">
-        Users are added to your franchise automatically. Do not set a franchise ID.
+        {isEditing
+          ? "Update team member details for your franchise."
+          : "Users are added to your franchise automatically. Do not set a franchise ID."}
       </p>
 
       <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -37,17 +40,23 @@ const CreateFranchiseTeamUserForm = ({
           onChange={onChange}
           placeholder="Email *"
           required
-          className="rounded-lg border border-white/25 bg-white/15 px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/60 focus:border-[#5eead4]"
+          readOnly={isEditing}
+          className={[
+            "rounded-lg border border-white/25 px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/60 focus:border-[#5eead4]",
+            isEditing ? "bg-white/5 text-white/70" : "bg-white/15",
+          ].join(" ")}
         />
-        <input
-          type="password"
-          name="password"
-          value={userForm.password}
-          onChange={onChange}
-          placeholder={`Password (optional — min ${MIN_PASSWORD_LENGTH} chars if set; auto-generated if empty)`}
-          minLength={MIN_PASSWORD_LENGTH}
-          className="md:col-span-2 rounded-lg border border-white/25 bg-white/15 px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/60 focus:border-[#5eead4]"
-        />
+        {!isEditing ? (
+          <input
+            type="password"
+            name="password"
+            value={userForm.password}
+            onChange={onChange}
+            placeholder={`Password (optional — min ${MIN_PASSWORD_LENGTH} chars if set; auto-generated if empty)`}
+            minLength={MIN_PASSWORD_LENGTH}
+            className="md:col-span-2 rounded-lg border border-white/25 bg-white/15 px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/60 focus:border-[#5eead4]"
+          />
+        ) : null}
         {showTerritory ? (
           <input
             name="territory"

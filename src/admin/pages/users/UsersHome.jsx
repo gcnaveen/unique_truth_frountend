@@ -12,6 +12,11 @@ import UsersStatsCard from "./components/UsersStatsCard";
 import UserRoleSelector from "./components/UserRoleSelector";
 import CreateUserForm from "./components/CreateUserForm";
 import {
+  UserProfilePhotoAvatar,
+  UserProfilePhotoUpload,
+  pickUserProfilePhotoUrl,
+} from "./components/UserProfilePhotoCell";
+import {
   MIN_PASSWORD_LENGTH,
   normalizeLoginEmail,
   validatePasswordForApi,
@@ -48,6 +53,7 @@ const apiRoleToUiRole = (value) => {
     return "sales_person";
   }
   if (value === "counsellor" || value === "counselor") return "counsellor";
+  if (value === "user" || value === "member") return "user";
   return "sales_person";
 };
 
@@ -70,6 +76,8 @@ const UsersHome = () => {
   const [success, setSuccess] = useState("");
   const [loginCredentials, setLoginCredentials] = useState(null);
   const [roleFilter, setRoleFilter] = useState("all");
+  const [editingUserApiRole, setEditingUserApiRole] = useState("");
+  const [editingUserPhotoUrl, setEditingUserPhotoUrl] = useState("");
 
   const normalizeList = (response) => {
     const payload = response?.data ?? response;
@@ -94,10 +102,19 @@ const UsersHome = () => {
   const rowActionButtonClass =
     "inline-flex h-8 min-w-18 items-center justify-center rounded-lg border px-3 text-xs font-semibold transition-colors";
   const getUserRoleLabel = (value) => {
-    const normalized = apiRoleToUiRole(value);
-    if (normalized === "admin") return "Franchise Admin";
-    if (normalized === "sales_person") return "Sales Person";
-    return "Counsellor";
+    const r = String(value || "")
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, "_");
+    if (r === "franchise_admin" || r === "franchiseadmin" || r === "admin") {
+      return "Franchise Admin";
+    }
+    if (r === "sales" || r === "sales_person" || r === "salesperson") {
+      return "Sales Person";
+    }
+    if (r === "counsellor" || r === "counselor") return "Counsellor";
+    if (r === "user" || r === "member") return "Member";
+    return value ? String(value).replace(/_/g, " ") : "—";
   };
   const getUserIsActive = (item) => item?.isActive !== false;
 
@@ -254,6 +271,8 @@ const UsersHome = () => {
         franchiseId: prev.franchiseId,
       }));
       setEditingUserId("");
+      setEditingUserApiRole("");
+      setEditingUserPhotoUrl("");
       setShowCreateView(false);
       await loadUsers();
       await loadFranchises();
@@ -287,6 +306,8 @@ const UsersHome = () => {
         isActive: user?.isActive !== false,
       }));
       setRole(apiRoleToUiRole(user?.role));
+      setEditingUserApiRole(user?.role || "");
+      setEditingUserPhotoUrl(pickUserProfilePhotoUrl(user));
       setEditingUserId(userId);
       setShowCreateView(true);
     } catch (fetchError) {
@@ -341,6 +362,8 @@ const UsersHome = () => {
               onClick={() => {
                 setShowCreateView(false);
                 setEditingUserId("");
+                setEditingUserApiRole("");
+                setEditingUserPhotoUrl("");
                 setUserForm((prev) => ({
                   ...initialUserForm,
                   franchiseId: prev.franchiseId,
@@ -407,16 +430,30 @@ const UsersHome = () => {
       {showCreateView ? (
         <div className="space-y-6">
           {editingUserId ? (
-            <div className="rounded-xl border border-white/20 bg-white/10 p-4 md:p-5">
-              <p className="text-xs font-semibold uppercase tracking-wide text-white/80">
-                Role
-              </p>
-              <div className="mt-3">
-                <span className="inline-flex rounded-lg border border-[#5eead4]/70 bg-[#5eead4]/15 px-3 py-1.5 text-xs font-semibold text-[#a7f3d0]">
-                  {getUserRoleLabel(role)}
-                </span>
+            <>
+              <UserProfilePhotoUpload
+                userId={editingUserId}
+                photoUrl={editingUserPhotoUrl}
+                name={userForm.name}
+                accessToken={access_token}
+                onUploaded={async (url) => {
+                  setEditingUserPhotoUrl(url);
+                  setSuccess("Profile photo updated.");
+                  await loadUsers();
+                }}
+                onError={(message) => setError(message)}
+              />
+              <div className="rounded-xl border border-white/20 bg-white/10 p-4 md:p-5">
+                <p className="text-xs font-semibold uppercase tracking-wide text-white/80">
+                  Role
+                </p>
+                <div className="mt-3">
+                  <span className="inline-flex rounded-lg border border-[#5eead4]/70 bg-[#5eead4]/15 px-3 py-1.5 text-xs font-semibold text-[#a7f3d0]">
+                    {getUserRoleLabel(editingUserApiRole)}
+                  </span>
+                </div>
               </div>
-            </div>
+            </>
           ) : (
             <UserRoleSelector role={role} setRole={setRole} />
           )}
@@ -429,7 +466,11 @@ const UsersHome = () => {
             onChange={handleChange}
             onSubmit={handleSubmit}
             submitting={submitting}
-            title={editingUserId ? `Edit ${getUserRoleLabel(role)}` : `Create ${getUserRoleLabel(role)}`}
+            title={
+              editingUserId
+                ? `Edit ${getUserRoleLabel(editingUserApiRole)}`
+                : `Create ${getUserRoleLabel(role)}`
+            }
             submitLabel={editingUserId ? "Update User" : `Create ${getUserRoleLabel(role)}`}
           />
         </div>
@@ -438,22 +479,25 @@ const UsersHome = () => {
           <table className="min-w-full table-fixed divide-y divide-white/15">
             <thead className="bg-white/20">
               <tr>
-                <th className="w-[8%] border-r border-white/15 px-4 py-3.5 text-center text-xs font-semibold uppercase text-white">
+                <th className="w-[6%] border-r border-white/15 px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
                   Sl No
                 </th>
-                <th className="w-[24%] border-r border-white/15 px-4 py-3.5 text-center text-xs font-semibold uppercase text-white">
+                <th className="w-[8%] border-r border-white/15 px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
+                  Photo
+                </th>
+                <th className="w-[20%] border-r border-white/15 px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
                   Name
                 </th>
-                <th className="w-[26%] border-r border-white/15 px-4 py-3.5 text-center text-xs font-semibold uppercase text-white">
+                <th className="w-[22%] border-r border-white/15 px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
                   Email
                 </th>
-                <th className="w-[15%] border-r border-white/15 px-4 py-3.5 text-center text-xs font-semibold uppercase text-white">
+                <th className="w-[14%] border-r border-white/15 px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
                   Role
                 </th>
-                <th className="w-[17%] border-r border-white/15 px-4 py-3.5 text-center text-xs font-semibold uppercase text-white">
+                <th className="w-[16%] border-r border-white/15 px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
                   Franchise
                 </th>
-                <th className="w-[10%] px-4 py-3.5 text-center text-xs font-semibold uppercase text-white">
+                <th className="w-[14%] px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
                   Action
                 </th>
               </tr>
@@ -461,41 +505,48 @@ const UsersHome = () => {
             <tbody className="divide-y divide-white/10">
               {loading ? (
                 <tr>
-                  <td className="px-4 py-8 text-center text-sm text-white md:px-5" colSpan={6}>
+                  <td className="px-4 py-8 text-center text-sm text-white md:px-5" colSpan={7}>
                     Loading users...
                   </td>
                 </tr>
               ) : users.length === 0 ? (
                 <tr>
-                  <td className="px-4 py-8 text-center text-sm text-white md:px-5" colSpan={6}>
+                  <td className="px-4 py-8 text-center text-sm text-white md:px-5" colSpan={7}>
                     No users found.
                   </td>
                 </tr>
               ) : (
-                users.map((item, index) => (
+                users.map((item, index) => {
+                  const userId = getUserId(item);
+                  const photoUrl = pickUserProfilePhotoUrl(item);
+
+                  return (
                   <tr
-                    key={getUserId(item) || item?.email || `user-${index}`}
+                    key={userId || item?.email || `user-${index}`}
                     className={index % 2 === 0 ? "bg-white/[0.04]" : "bg-white/[0.08]"}
                   >
-                    <td className="border-r border-white/10 px-4 py-4 text-center text-sm text-white md:px-5">
+                    <td className="border-r border-white/10 px-3 py-4 text-center text-sm text-white">
                       {(currentPage - 1) * pageLimit + index + 1}
                     </td>
-                    <td className="border-r border-white/10 px-4 py-4 text-center text-sm text-white md:px-5">
+                    <td className="border-r border-white/10 px-3 py-4 text-center align-middle">
+                      <UserProfilePhotoAvatar photoUrl={photoUrl} name={item?.name} />
+                    </td>
+                    <td className="border-r border-white/10 px-3 py-4 text-center text-sm text-white">
                       {item?.name || "-"}
                     </td>
-                    <td className="border-r border-white/10 px-4 py-4 text-center text-sm text-white md:px-5">
+                    <td className="border-r border-white/10 px-3 py-4 text-center text-sm text-white">
                       {item?.email || "-"}
                     </td>
-                    <td className="border-r border-white/10 px-4 py-4 text-center text-sm text-white md:px-5">
+                    <td className="border-r border-white/10 px-3 py-4 text-center text-sm text-white">
                       {getUserRoleLabel(item?.role)}
                     </td>
-                    <td className="border-r border-white/10 px-4 py-4 text-center text-sm text-white md:px-5">
+                    <td className="border-r border-white/10 px-3 py-4 text-center text-sm text-white">
                       {item?.franchiseName ||
                         item?.franchise?.name ||
                         item?.preferredFranchise?.name ||
                         "-"}
                     </td>
-                    <td className="px-4 py-4 text-center md:px-5">
+                    <td className="px-3 py-4 text-center">
                       <div className="flex flex-wrap justify-center gap-2">
                         <button
                           type="button"
@@ -518,7 +569,8 @@ const UsersHome = () => {
                       </div>
                     </td>
                   </tr>
-                ))
+                  );
+                })
               )}
             </tbody>
           </table>

@@ -30,9 +30,14 @@ export default function EnquiriesStats({ stats, loading }) {
   const behavioral = byService?.["Behavioral Awareness"];
   const relationship = byService?.["Relationship Awareness"];
   const talent = byService?.["Talent Awareness"];
+  const completePackage =
+    byService?.["Complete Package"] ??
+    stats?.completePackages ??
+    stats?.completePackageCount ??
+    null;
 
   return (
-    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
       <StatCard
         label="Total enquiries"
         value={loading ? null : total}
@@ -42,6 +47,7 @@ export default function EnquiriesStats({ stats, loading }) {
       <StatCard label="Behavioral Awareness" value={loading ? null : behavioral} />
       <StatCard label="Relationship Awareness" value={loading ? null : relationship} />
       <StatCard label="Talent Awareness" value={loading ? null : talent} />
+      <StatCard label="Complete Package" value={loading ? null : completePackage} />
     </div>
   );
 }

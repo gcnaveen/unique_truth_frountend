@@ -58,7 +58,7 @@ const DashboardHome = () => {
           Counsellor dashboard
         </h1>
         <p className="mt-1 text-sm text-white/90 md:text-base">
-          Assigned users, sessions, fingerprint uploads, audio recordings, and reports.
+          Assigned users, sessions, member fingerprints, audio recordings, and reports.
         </p>
       </div>
 

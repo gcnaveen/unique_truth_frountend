@@ -19,6 +19,7 @@ import {
   pickCheckoutUrl,
   pickFullPaymentFromStatus,
   stashPaymentReturn,
+  withPortalPaymentRedirect,
 } from "../../utils/payment";
 import { getPricingBreakdown } from "../../utils/pricing";
 
@@ -137,15 +138,21 @@ export default function FullPaymentPage() {
     try {
       setSubmitting(true);
       setError("");
-      const response = await initiatePortalFullPayment(access_token, {
-        amountRupees: amount,
-        counselingLevel: level,
-        enquiryId,
-      });
+      stashPaymentReturn({ type: "full", returnTo, enquiryId });
+
+      const response = await initiatePortalFullPayment(
+        access_token,
+        withPortalPaymentRedirect(
+          {
+            amountRupees: amount,
+            counselingLevel: level,
+            enquiryId,
+          },
+          { type: "full", enquiryId, returnTo },
+        ),
+      );
       const checkoutUrl = pickCheckoutUrl(response);
       if (!checkoutUrl) throw new Error("Checkout URL not returned. Contact support.");
-
-      stashPaymentReturn({ type: "full", returnTo, enquiryId });
       window.location.href = checkoutUrl;
     } catch (payError) {
       setError(

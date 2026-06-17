@@ -15,6 +15,8 @@ export const pickAuthToken = (payload) =>
 
 export const pickAuthUser = (payload) => payload?.user ?? payload?.data ?? payload;
 
+export const pickLoginProfileEdit = (payload) => payload?.profileEdit ?? null;
+
 export const loginUser = async ({ email, password }) => {
   const response = await authClient.post("/auth/login", {
     email: normalizeLoginEmail(email),

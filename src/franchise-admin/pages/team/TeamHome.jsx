@@ -1,15 +1,23 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import {
+  blockFranchiseAdminUser,
   createFranchiseAdminUser,
   getFranchiseAdminTeam,
+  getFranchiseAdminUserById,
+  updateFranchiseAdminUser,
 } from "../../../api/franchiseAdmin";
 import { getCounselingLevels } from "../../../api/publicPortal";
 import CreateFranchiseTeamUserForm from "./components/CreateFranchiseTeamUserForm";
 import FranchiseTeamRoleSelector from "./components/FranchiseTeamRoleSelector";
-import TeamStatsCard from "./components/TeamStatsCard";
 import {
-  MIN_PASSWORD_LENGTH,
+  FranchiseTeamPhotoAvatar,
+  FranchiseTeamProfilePhotoUpload,
+  pickUserProfilePhotoUrl,
+} from "./components/FranchiseTeamProfilePhoto";
+import TeamStatsCard from "./components/TeamStatsCard";
+import { useAppAlert } from "../../../context/AppAlertContext";
+import {
   normalizeLoginEmail,
   validatePasswordForApi,
 } from "../../../utils/authConstants";
@@ -65,9 +73,20 @@ const getRoleLabel = (role) => {
   return map[String(role || "").toLowerCase()] || role || "-";
 };
 
+const normalizeTeamRole = (value) => {
+  const role = String(value || "").toLowerCase().trim();
+  if (role === "sales" || role === "sales_person" || role === "salesperson") return "sales";
+  if (role === "counsellor" || role === "counselor") return "counsellor";
+  return role;
+};
+
 const TeamHome = () => {
+  const { confirm } = useAppAlert();
   const { access_token } = useSelector((state) => state.user.value);
   const [showCreateView, setShowCreateView] = useState(false);
+  const [editingUserId, setEditingUserId] = useState("");
+  const [editingUserApiRole, setEditingUserApiRole] = useState("");
+  const [editingUserPhotoUrl, setEditingUserPhotoUrl] = useState("");
   const [userForm, setUserForm] = useState(initialUserForm);
   const [role, setRole] = useState("sales");
   const [roleFilter, setRoleFilter] = useState("");
@@ -89,6 +108,9 @@ const TeamHome = () => {
   });
 
   const getUserId = (item) => item?._id || item?.id || "";
+  const getUserIsActive = (item) => item?.isActive !== false;
+  const rowActionButtonClass =
+    "inline-flex h-8 min-w-18 items-center justify-center rounded-lg border px-3 text-xs font-semibold transition-colors";
 
   const loadTeam = async () => {
     try {
@@ -158,69 +180,141 @@ const TeamHome = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (role === "counsellor" && !userForm.speciality?.trim()) {
+    const editRole = editingUserId ? normalizeTeamRole(editingUserApiRole) : role;
+
+    if (editRole === "counsellor" && !userForm.speciality?.trim()) {
       setError("Speciality is required for counsellor role.");
       return;
     }
-    if (role === "counsellor" && !userForm.counselingLevel) {
+    if (editRole === "counsellor" && !userForm.counselingLevel) {
       setError("Counseling level is required for counsellor role.");
       return;
     }
 
-    const pwd = userForm.password?.trim() || "";
-    if (pwd) {
-      const pwdError = validatePasswordForApi(pwd);
-      if (pwdError) {
-        setError(pwdError);
-        return;
+    if (!editingUserId) {
+      const pwd = userForm.password?.trim() || "";
+      if (pwd) {
+        const pwdError = validatePasswordForApi(pwd);
+        if (pwdError) {
+          setError(pwdError);
+          return;
+        }
       }
     }
+
+    const wasEditing = Boolean(editingUserId);
 
     try {
       setSubmitting(true);
       setError("");
       setSuccess("");
 
-      const payload = {
-        email: normalizeLoginEmail(userForm.email),
-        name: userForm.name.trim(),
-        role,
-      };
-      if (role === "sales" && userForm.territory?.trim()) {
-        payload.territory = userForm.territory.trim();
-      }
-      if (role === "counsellor") {
-        payload.speciality = userForm.speciality.trim();
-        payload.counselingLevel = userForm.counselingLevel;
-      }
-      if (userForm.password?.trim()) {
-        payload.password = userForm.password.trim();
-      }
+      if (wasEditing) {
+        const payload = { name: userForm.name.trim() };
+        if (editRole === "sales") {
+          payload.territory = userForm.territory?.trim() || "";
+        }
+        if (editRole === "counsellor") {
+          payload.speciality = userForm.speciality.trim();
+          payload.counselingLevel = userForm.counselingLevel;
+        }
+        await updateFranchiseAdminUser(access_token, editingUserId, payload);
+        setSuccess("Team member updated successfully.");
+      } else {
+        const payload = {
+          email: normalizeLoginEmail(userForm.email),
+          name: userForm.name.trim(),
+          role,
+        };
+        if (role === "sales" && userForm.territory?.trim()) {
+          payload.territory = userForm.territory.trim();
+        }
+        if (role === "counsellor") {
+          payload.speciality = userForm.speciality.trim();
+          payload.counselingLevel = userForm.counselingLevel;
+        }
+        if (userForm.password?.trim()) {
+          payload.password = userForm.password.trim();
+        }
 
-      const response = await createFranchiseAdminUser(access_token, payload);
-      const created = response?.data ?? response;
-      const initialPassword =
-        created?.initialPassword ?? response?.initialPassword ?? null;
+        const response = await createFranchiseAdminUser(access_token, payload);
+        const created = response?.data ?? response;
+        const initialPassword =
+          created?.initialPassword ?? response?.initialPassword ?? null;
 
-      let successMsg = `${getRoleLabel(role)} added successfully.`;
-      if (initialPassword) {
-        successMsg += ` Initial password: ${initialPassword}`;
+        let successMsg = `${getRoleLabel(role)} added successfully.`;
+        if (initialPassword) {
+          successMsg += ` Initial password: ${initialPassword}`;
+        }
+        setSuccess(successMsg);
       }
-      setSuccess(successMsg);
 
       setUserForm(buildInitialUserForm());
       setRole("sales");
+      setEditingUserId("");
+      setEditingUserApiRole("");
+      setEditingUserPhotoUrl("");
       setShowCreateView(false);
-      setCurrentPage(1);
+      if (!wasEditing) setCurrentPage(1);
       await loadTeam();
     } catch (submitError) {
       setError(
         submitError?.response?.data?.message ||
           submitError?.response?.data?.error ||
-          "Failed to add team member.",
+          (wasEditing ? "Failed to update team member." : "Failed to add team member."),
       );
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleEditUser = async (userId) => {
+    if (!userId) return;
+    try {
+      setError("");
+      setSuccess("");
+      const response = await getFranchiseAdminUserById(access_token, userId);
+      const user = response?.data ?? response;
+      const apiRole = user?.role || "";
+      const uiRole = normalizeTeamRole(apiRole);
+
+      setUserForm({
+        email: user?.email || "",
+        name: user?.name || "",
+        password: "",
+        territory: user?.territory || "",
+        speciality: user?.speciality || "",
+        counselingLevel:
+          user?.counselingLevel || counselingLevels[0]?.id || "",
+      });
+      setRole(uiRole === "counsellor" ? "counsellor" : "sales");
+      setEditingUserApiRole(apiRole);
+      setEditingUserPhotoUrl(pickUserProfilePhotoUrl(user));
+      setEditingUserId(userId);
+      setShowCreateView(true);
+    } catch (fetchError) {
+      setError(fetchError?.response?.data?.message || "Failed to load team member details.");
+    }
+  };
+
+  const handleToggleBlockUser = async (userId, isActive) => {
+    if (!userId) return;
+    const nextIsActive = !isActive;
+    const isConfirmed = await confirm({
+      title: nextIsActive ? "Unblock user" : "Block user",
+      message: `Are you sure you want to ${nextIsActive ? "unblock" : "block"} this team member?`,
+      confirmLabel: nextIsActive ? "Unblock" : "Block",
+      variant: nextIsActive ? "default" : "danger",
+    });
+    if (!isConfirmed) return;
+    try {
+      setError("");
+      setSuccess("");
+      await blockFranchiseAdminUser(access_token, userId, { isActive: nextIsActive });
+      setSuccess(`Team member ${nextIsActive ? "unblocked" : "blocked"} successfully.`);
+      await loadTeam();
+    } catch (blockError) {
+      setError(blockError?.response?.data?.message || "Failed to update team member status.");
     }
   };
 
@@ -247,6 +341,9 @@ const TeamHome = () => {
               type="button"
               onClick={() => {
                 setShowCreateView(false);
+                setEditingUserId("");
+                setEditingUserApiRole("");
+                setEditingUserPhotoUrl("");
                 setUserForm(buildInitialUserForm());
                 setError("");
               }}
@@ -273,17 +370,49 @@ const TeamHome = () => {
 
       {showCreateView ? (
         <div className="space-y-6">
-          <FranchiseTeamRoleSelector role={role} setRole={setRole} />
+          {editingUserId ? (
+            <>
+              <FranchiseTeamProfilePhotoUpload
+                userId={editingUserId}
+                photoUrl={editingUserPhotoUrl}
+                name={userForm.name}
+                accessToken={access_token}
+                onUploaded={async (url) => {
+                  setEditingUserPhotoUrl(url);
+                  setSuccess("Profile photo updated.");
+                  await loadTeam();
+                }}
+                onError={(message) => setError(message)}
+              />
+              <div className="rounded-xl border border-white/20 bg-white/10 p-4 md:p-5">
+                <p className="text-xs font-semibold uppercase tracking-wide text-white/80">Role</p>
+                <div className="mt-3">
+                  <span className="inline-flex rounded-lg border border-[#5eead4]/70 bg-[#5eead4]/15 px-3 py-1.5 text-xs font-semibold text-[#a7f3d0]">
+                    {getRoleLabel(editingUserApiRole)}
+                  </span>
+                </div>
+              </div>
+            </>
+          ) : (
+            <FranchiseTeamRoleSelector role={role} setRole={setRole} />
+          )}
           <CreateFranchiseTeamUserForm
-            role={role}
+            role={editingUserId ? normalizeTeamRole(editingUserApiRole) : role}
             userForm={userForm}
             levels={counselingLevels}
             loadingLevels={loadingLevels}
             onChange={handleChange}
             onSubmit={handleSubmit}
             submitting={submitting}
-            title={`Add ${getRoleLabel(role)}`}
-            submitLabel={`Add ${getRoleLabel(role)}`}
+            isEditing={Boolean(editingUserId)}
+            title={
+              editingUserId
+                ? `Edit ${getRoleLabel(editingUserApiRole)}`
+                : `Add ${getRoleLabel(role)}`
+            }
+            submitLabel={
+              editingUserId ? "Update team member" : `Add ${getRoleLabel(role)}`
+            }
           />
         </div>
       ) : (
@@ -312,65 +441,103 @@ const TeamHome = () => {
             <table className="min-w-full table-fixed divide-y divide-white/15">
               <thead className="bg-white/20">
                 <tr>
-                  <th className="w-[8%] border-r border-white/15 px-4 py-3.5 text-center text-xs font-semibold uppercase text-white">
+                  <th className="w-[6%] border-r border-white/15 px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
                     #
                   </th>
-                  <th className="w-[22%] border-r border-white/15 px-4 py-3.5 text-center text-xs font-semibold uppercase text-white">
+                  <th className="w-[8%] border-r border-white/15 px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
+                    Photo
+                  </th>
+                  <th className="w-[16%] border-r border-white/15 px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
                     Name
                   </th>
-                  <th className="w-[28%] border-r border-white/15 px-4 py-3.5 text-center text-xs font-semibold uppercase text-white">
+                  <th className="w-[20%] border-r border-white/15 px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
                     Email
                   </th>
-                  <th className="w-[14%] border-r border-white/15 px-4 py-3.5 text-center text-xs font-semibold uppercase text-white">
+                  <th className="w-[12%] border-r border-white/15 px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
                     Role
                   </th>
-                  <th className="w-[14%] border-r border-white/15 px-4 py-3.5 text-center text-xs font-semibold uppercase text-white">
+                  <th className="w-[12%] border-r border-white/15 px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
                     Territory
                   </th>
-                  <th className="w-[14%] px-4 py-3.5 text-center text-xs font-semibold uppercase text-white">
+                  <th className="w-[12%] border-r border-white/15 px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
                     Speciality
+                  </th>
+                  <th className="w-[14%] px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
+                    Action
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/10">
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-sm text-white">
+                    <td colSpan={8} className="px-4 py-8 text-center text-sm text-white">
                       Loading team…
                     </td>
                   </tr>
                 ) : team.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-sm text-white">
+                    <td colSpan={8} className="px-4 py-8 text-center text-sm text-white">
                       No team members found.
                     </td>
                   </tr>
                 ) : (
-                  team.map((item, index) => (
-                    <tr
-                      key={getUserId(item) || item?.email || `member-${index}`}
-                      className={index % 2 === 0 ? "bg-white/[0.04]" : "bg-white/[0.08]"}
-                    >
-                      <td className="border-r border-white/10 px-4 py-4 text-center text-sm text-white">
-                        {(currentPage - 1) * pageLimit + index + 1}
-                      </td>
-                      <td className="border-r border-white/10 px-4 py-4 text-center text-sm text-white">
-                        {item?.name || "-"}
-                      </td>
-                      <td className="border-r border-white/10 px-4 py-4 text-center text-sm text-white">
-                        {item?.email || "-"}
-                      </td>
-                      <td className="border-r border-white/10 px-4 py-4 text-center text-sm text-white">
-                        {getRoleLabel(item?.role)}
-                      </td>
-                      <td className="border-r border-white/10 px-4 py-4 text-center text-sm text-white">
-                        {item?.territory || "-"}
-                      </td>
-                      <td className="px-4 py-4 text-center text-sm text-white">
-                        {item?.speciality || "-"}
-                      </td>
-                    </tr>
-                  ))
+                  team.map((item, index) => {
+                    const userId = getUserId(item);
+                    const photoUrl = pickUserProfilePhotoUrl(item);
+
+                    return (
+                      <tr
+                        key={userId || item?.email || `member-${index}`}
+                        className={index % 2 === 0 ? "bg-white/[0.04]" : "bg-white/[0.08]"}
+                      >
+                        <td className="border-r border-white/10 px-3 py-4 text-center text-sm text-white">
+                          {(currentPage - 1) * pageLimit + index + 1}
+                        </td>
+                        <td className="border-r border-white/10 px-3 py-4 text-center align-middle">
+                          <FranchiseTeamPhotoAvatar photoUrl={photoUrl} name={item?.name} />
+                        </td>
+                        <td className="border-r border-white/10 px-3 py-4 text-center text-sm text-white">
+                          {item?.name || "-"}
+                        </td>
+                        <td className="border-r border-white/10 px-3 py-4 text-center text-sm text-white">
+                          {item?.email || "-"}
+                        </td>
+                        <td className="border-r border-white/10 px-3 py-4 text-center text-sm text-white">
+                          {getRoleLabel(item?.role)}
+                        </td>
+                        <td className="border-r border-white/10 px-3 py-4 text-center text-sm text-white">
+                          {item?.territory || "-"}
+                        </td>
+                        <td className="border-r border-white/10 px-3 py-4 text-center text-sm text-white">
+                          {item?.speciality || "-"}
+                        </td>
+                        <td className="px-3 py-4 text-center">
+                          <div className="flex flex-wrap justify-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleEditUser(userId)}
+                              className={`${rowActionButtonClass} border-[#5eead4]/70 bg-[#5eead4]/15 text-[#a7f3d0] hover:bg-[#5eead4]/25`}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleToggleBlockUser(userId, getUserIsActive(item))
+                              }
+                              className={`${rowActionButtonClass} ${
+                                getUserIsActive(item)
+                                  ? "border-red-300/40 bg-red-500/20 text-red-100 hover:bg-red-500/30"
+                                  : "border-emerald-300/40 bg-emerald-500/20 text-emerald-100 hover:bg-emerald-500/30"
+                              }`}
+                            >
+                              {getUserIsActive(item) ? "Block" : "Unblock"}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>

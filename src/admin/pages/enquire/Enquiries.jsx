@@ -12,11 +12,15 @@ const TABS = [
   { id: QuestionaryService.BEHAVIORAL_AWARENESS, label: "Behavioral Awareness" },
   { id: QuestionaryService.RELATIONSHIP_AWARENESS, label: "Relationship Awareness" },
   { id: QuestionaryService.TALENT_AWARENESS, label: "Talent Awareness" },
+  { id: QuestionaryService.COMPLETE_PACKAGE, label: "Complete Package" },
 ];
 
 const normalizeList = (response) => {
   const payload = response?.data ?? response;
-  return Array.isArray(payload) ? payload : [];
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.items)) return payload.items;
+  if (Array.isArray(payload?.enquiries)) return payload.enquiries;
+  return [];
 };
 
 const normalizeStats = (response) => response?.data ?? response ?? null;
@@ -126,7 +130,9 @@ const Enquiries = () => {
 
       {selected ? (
         <EnquiryDetailsDrawer
-          enquiry={selected}
+          enquiryId={selected?._id || selected?.id}
+          initialEnquiry={selected}
+          accessToken={access_token}
           open={isDrawerVisible}
           onClose={closeDrawer}
         />

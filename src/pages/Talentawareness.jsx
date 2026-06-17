@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import ServiceJourneyCtaButton from "../components/ServiceJourneyCtaButton";
+import { QuestionaryService } from "../api/questionaries";
+import QuestionaryEnquiryFlow from "../components/QuestionaryEnquiryFlow";
+import ServiceJourneyCtaButton, {
+  SERVICE_ENQUIRY_ANCHOR_ID,
+} from "../components/ServiceJourneyCtaButton";
 
 const useInView = (threshold = 0.1) => {
   const ref = useRef(null);
@@ -97,6 +101,17 @@ const Talentawareness = () => {
               <span className="text-[#c9a86c]">Talent Awareness</span>
             </h1>
           </FadeUp>
+
+          <div id={SERVICE_ENQUIRY_ANCHOR_ID} className="scroll-mt-28 mb-10">
+            <FadeUp delay={120}>
+              <QuestionaryEnquiryFlow
+                service={QuestionaryService.TALENT_AWARENESS}
+                interstitialBeforeEnquiry={
+                  "Are you ready to discover your innate talents and authentic career clarity? Let's register and connect with Unique TRUTH experts."
+                }
+              />
+            </FadeUp>
+          </div>
 
           {/* Benefits grid */}
           <div className="grid md:grid-cols-2 gap-6 mt-12 auto-rows-fr">
@@ -273,7 +288,7 @@ const Talentawareness = () => {
                   Begin your Talent Awareness journey today and unlock the
                   natural gifts that will guide your path to success.
                 </p>
-                <ServiceJourneyCtaButton hasEnquiryFlow={false}>
+                <ServiceJourneyCtaButton hasEnquiryFlow>
                   Start Your Journey
                 </ServiceJourneyCtaButton>
               </div>

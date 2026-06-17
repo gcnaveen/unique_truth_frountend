@@ -16,6 +16,8 @@ const initialValue = {
   advancePayment: null,
   fullPayment: null,
   counselingLevel: "",
+  profilePhotoUrl: "",
+  profileEdit: null,
 };
 
 export const userSlice = createSlice({

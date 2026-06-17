@@ -1,16 +1,37 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { changeAccountPassword } from "../../../api/account";
 import {
   getPortalDataExport,
-  patchPortalPassword,
+  getPortalMe,
+  patchPortalMe,
   postPortalDataRequest,
 } from "../../../api/portal";
-import { passwordChanged } from "../../../reducers/user";
+import ProfilePhotoEditor from "../../../components/profile/ProfilePhotoEditor";
+import { passwordChanged, updateUser } from "../../../reducers/user";
 import { MIN_PASSWORD_LENGTH } from "../../../utils/authConstants";
+import { pickPortalAccessFromLogin } from "../../utils/access";
+import { pickProfileEdit } from "../../../utils/profileEdit";
+import {
+  pickUserProfilePhotoUrl,
+  unwrapApiPayload,
+} from "../../../utils/profilePhoto";
 
 export default function PortalSettingsHome() {
   const dispatch = useDispatch();
-  const { access_token } = useSelector((state) => state.user.value);
+  const {
+    access_token,
+    name: storedName,
+    profilePhotoUrl: storedPhoto,
+    profileEdit: storedEdit,
+  } = useSelector((state) => state.user.value);
+
+  const [profileEdit, setProfileEdit] = useState(
+    storedEdit || pickProfileEdit(null, { isPortalUser: true }),
+  );
+  const [name, setName] = useState(storedName || "");
+  const [photoUrl, setPhotoUrl] = useState(storedPhoto || "");
+  const [loading, setLoading] = useState(true);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -22,6 +43,72 @@ export default function PortalSettingsHome() {
   const [success, setSuccess] = useState("");
 
   const panelClass = "rounded-2xl border border-white/15 bg-white/8 p-5 md:p-6";
+
+  useEffect(() => {
+    if (!access_token) return;
+    const load = async () => {
+      try {
+        setLoading(true);
+        const response = await getPortalMe(access_token);
+        const data = unwrapApiPayload(response);
+        const edit = pickProfileEdit(data, { isPortalUser: true });
+        const access = pickPortalAccessFromLogin(data);
+        setProfileEdit(edit);
+        setName(data.name || storedName || "");
+        setPhotoUrl(pickUserProfilePhotoUrl(data));
+        dispatch(
+          updateUser({
+            name: data.name,
+            profilePhotoUrl: pickUserProfilePhotoUrl(data),
+            profileEdit: edit,
+            ...access,
+          }),
+        );
+      } catch {
+        setProfileEdit(pickProfileEdit(storedEdit, { isPortalUser: true }));
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [access_token, dispatch]);
+
+  const handleNameSave = async (event) => {
+    event.preventDefault();
+    const trimmed = name.trim();
+    if (!trimmed) {
+      setError("Name is required.");
+      return;
+    }
+    try {
+      setSubmitting(true);
+      setError("");
+      setSuccess("");
+      await patchPortalMe(access_token, { name: trimmed });
+      dispatch(updateUser({ name: trimmed }));
+      setSuccess("Name updated.");
+    } catch (submitError) {
+      setError(submitError?.response?.data?.message || "Failed to update name.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handlePhotoSaved = async (url) => {
+    await patchPortalMe(access_token, { profilePhotoUrl: url });
+    setPhotoUrl(url);
+    dispatch(updateUser({ profilePhotoUrl: url }));
+    setSuccess("Profile photo updated.");
+    setError("");
+  };
+
+  const handlePhotoRemoved = async () => {
+    await patchPortalMe(access_token, { profilePhotoUrl: null });
+    setPhotoUrl("");
+    dispatch(updateUser({ profilePhotoUrl: "" }));
+    setSuccess("Profile photo removed.");
+    setError("");
+  };
 
   const handlePassword = async (event) => {
     event.preventDefault();
@@ -37,10 +124,7 @@ export default function PortalSettingsHome() {
       setSubmitting(true);
       setError("");
       setSuccess("");
-      await patchPortalPassword(access_token, {
-        currentPassword,
-        newPassword,
-      });
+      await changeAccountPassword(access_token, { currentPassword, newPassword });
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
@@ -92,12 +176,16 @@ export default function PortalSettingsHome() {
     }
   };
 
+  if (loading) {
+    return <p className="text-sm text-white/70">Loading settings…</p>;
+  }
+
   return (
     <div className="space-y-8">
       <div>
         <h1 className="font-serif text-3xl font-semibold text-white">Privacy & account</h1>
         <p className="mt-2 text-sm text-white/70">
-          Manage your password, export your data, or submit a DPDP request.
+          Manage your profile, password, data export, and privacy requests.
         </p>
       </div>
 
@@ -112,46 +200,81 @@ export default function PortalSettingsHome() {
         </div>
       ) : null}
 
-      <form onSubmit={handlePassword} className={panelClass}>
-        <h2 className="text-lg font-semibold text-white">Change password</h2>
-        <p className="mt-1 text-xs text-white/55">
-          Use a strong password you have not used elsewhere.
-        </p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+      {profileEdit?.canEditName ? (
+        <form onSubmit={handleNameSave} className={panelClass}>
+          <h2 className="text-lg font-semibold text-white">Your name</h2>
           <input
-            type="password"
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            placeholder="Current password"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             required
-            className="rounded-xl border border-white/20 bg-white/10 px-3 py-2.5 text-sm text-white outline-none focus:border-[#5eead4] sm:col-span-2"
+            className="mt-4 w-full max-w-md rounded-xl border border-white/20 bg-white/10 px-3 py-2.5 text-sm text-white outline-none focus:border-[#5eead4]"
           />
-          <input
-            type="password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="New password"
-            required
-            minLength={MIN_PASSWORD_LENGTH}
-            className="rounded-xl border border-white/20 bg-white/10 px-3 py-2.5 text-sm text-white outline-none focus:border-[#5eead4]"
-          />
-          <input
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="Confirm new password"
-            required
-            className="rounded-xl border border-white/20 bg-white/10 px-3 py-2.5 text-sm text-white outline-none focus:border-[#5eead4]"
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={submitting}
-          className="mt-4 rounded-xl bg-linear-to-r from-[#c9a86c] to-[#5eead4] px-4 py-2 text-sm font-semibold text-[#0f2e1a] disabled:opacity-50"
-        >
-          Update password
-        </button>
-      </form>
+          <button
+            type="submit"
+            disabled={submitting}
+            className="mt-4 rounded-xl border border-[#5eead4]/50 bg-[#5eead4]/15 px-4 py-2 text-sm font-semibold text-[#a7f3d0] disabled:opacity-50"
+          >
+            Save name
+          </button>
+        </form>
+      ) : null}
+
+      {profileEdit?.canEditProfilePhoto !== false ? (
+        <ProfilePhotoEditor
+          accessToken={access_token}
+          photoUrl={photoUrl}
+          name={name}
+          canEdit
+          onPhotoSaved={handlePhotoSaved}
+          onPhotoRemoved={handlePhotoRemoved}
+          onError={setError}
+          helperText="Update your member portal profile photo."
+        />
+      ) : null}
+
+      {profileEdit?.canChangePassword !== false ? (
+        <form onSubmit={handlePassword} className={panelClass}>
+          <h2 className="text-lg font-semibold text-white">Change password</h2>
+          <p className="mt-1 text-xs text-white/55">
+            Use a strong password you have not used elsewhere.
+          </p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <input
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder="Current password"
+              required
+              className="rounded-xl border border-white/20 bg-white/10 px-3 py-2.5 text-sm text-white outline-none focus:border-[#5eead4] sm:col-span-2"
+            />
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="New password"
+              required
+              minLength={MIN_PASSWORD_LENGTH}
+              className="rounded-xl border border-white/20 bg-white/10 px-3 py-2.5 text-sm text-white outline-none focus:border-[#5eead4]"
+            />
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm new password"
+              required
+              className="rounded-xl border border-white/20 bg-white/10 px-3 py-2.5 text-sm text-white outline-none focus:border-[#5eead4]"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={submitting}
+            className="mt-4 rounded-xl bg-linear-to-r from-[#c9a86c] to-[#5eead4] px-4 py-2 text-sm font-semibold text-[#0f2e1a] disabled:opacity-50"
+          >
+            Update password
+          </button>
+        </form>
+      ) : null}
 
       <div className={panelClass}>
         <h2 className="text-lg font-semibold text-white">Export my data</h2>

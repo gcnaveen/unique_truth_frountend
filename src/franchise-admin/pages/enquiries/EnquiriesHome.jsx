@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
+import UserAvatar from "../../../components/profile/UserAvatar";
+import { pickUserProfilePhotoUrl } from "../../../utils/profilePhoto";
 import {
-  assignFranchiseAdminEnquiry,
+  assignFranchiseAdminEnquiryTeam,
+  getFranchiseAdminEnquiryAssignmentSettings,
   getFranchiseAdminEnquiryById,
   getFranchiseAdminEnquiries,
   getFranchiseAdminTeam,
+  patchFranchiseAdminEnquiryAssignmentSettings,
 } from "../../../api/franchiseAdmin";
 
 const normalizePagedItems = (response) => {
@@ -23,25 +27,84 @@ const normalizePagedItems = (response) => {
   };
 };
 
+const unwrapPayload = (response) => response?.data ?? response ?? {};
+
+const pickAutoAssign = (payload) => {
+  const value =
+    payload?.autoAssign ??
+    payload?.enquiryAutoAssign ??
+    payload?.autoAssignment ??
+    payload?.enabled;
+  return value === true;
+};
+
 const formatService = (value) =>
   String(value || "")
     .replace(/_/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase()) || "—";
 
 const getAssignedSalesId = (row) =>
-  row?.salesId || row?.assignedSalesId || row?.assignedTo?._id || row?.assignedTo?.id || "";
+  row?.salesId ||
+  row?.assignedSalesId ||
+  row?.assignedSales?._id ||
+  row?.assignedSales?.id ||
+  row?.assignedTo?._id ||
+  row?.assignedTo?.id ||
+  "";
+
+const getAssignedCounsellorId = (row) =>
+  row?.counsellorId ||
+  row?.assignedCounsellorId ||
+  row?.assignedCounsellor?._id ||
+  row?.assignedCounsellor?.id ||
+  "";
+
+const getAssigneeLabel = (row, nestedField) => {
+  const nested = row?.[nestedField];
+  if (nested?.name) return nested.name;
+  if (nested?.email) return nested.email;
+  return "—";
+};
+
+const AssigneeCell = ({ row, nestedField, accentClass }) => {
+  const nested = row?.[nestedField];
+  const label = getAssigneeLabel(row, nestedField);
+  if (!nested || label === "—") {
+    return <span className="text-xs text-white/50">Unassigned</span>;
+  }
+  return (
+    <div className="flex flex-col items-center gap-1.5">
+      <UserAvatar
+        name={label}
+        photoUrl={pickUserProfilePhotoUrl(nested)}
+        size={32}
+      />
+      <span
+        className={[
+          "inline-flex max-w-full truncate rounded-md border px-2 py-0.5 text-[10px] font-semibold",
+          accentClass,
+        ].join(" ")}
+      >
+        {label}
+      </span>
+    </div>
+  );
+};
 
 const EnquiriesHome = () => {
   const { access_token } = useSelector((state) => state.user.value);
   const [enquiries, setEnquiries] = useState([]);
   const [salesTeam, setSalesTeam] = useState([]);
+  const [counsellorTeam, setCounsellorTeam] = useState([]);
+  const [autoAssign, setAutoAssign] = useState(false);
+  const [settingsLoading, setSettingsLoading] = useState(true);
+  const [settingsSaving, setSettingsSaving] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageLimit] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [assigningId, setAssigningId] = useState("");
-  const [salesByEnquiry, setSalesByEnquiry] = useState({});
-  const [assignModeByEnquiry, setAssignModeByEnquiry] = useState({});
+  const [teamByEnquiry, setTeamByEnquiry] = useState({});
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -55,17 +118,29 @@ const EnquiriesHome = () => {
   const getUserLabel = (row) =>
     row?.name ? `${row.name}${row.email ? ` (${row.email})` : ""}` : row?.email || "—";
 
-  const loadSalesTeam = async () => {
+  const loadTeam = async () => {
     try {
-      const response = await getFranchiseAdminTeam(access_token, {
-        role: "sales",
-        limit: 100,
-        skip: 0,
-      });
-      const { items } = normalizePagedItems(response);
-      setSalesTeam(items);
+      const [salesResponse, counsellorResponse] = await Promise.all([
+        getFranchiseAdminTeam(access_token, { role: "sales", limit: 100, skip: 0 }),
+        getFranchiseAdminTeam(access_token, { role: "counsellor", limit: 100, skip: 0 }),
+      ]);
+      setSalesTeam(normalizePagedItems(salesResponse).items);
+      setCounsellorTeam(normalizePagedItems(counsellorResponse).items);
     } catch {
       setSalesTeam([]);
+      setCounsellorTeam([]);
+    }
+  };
+
+  const loadAssignmentSettings = async () => {
+    try {
+      setSettingsLoading(true);
+      const response = await getFranchiseAdminEnquiryAssignmentSettings(access_token);
+      setAutoAssign(pickAutoAssign(unwrapPayload(response)));
+    } catch {
+      setAutoAssign(false);
+    } finally {
+      setSettingsLoading(false);
     }
   };
 
@@ -84,7 +159,7 @@ const EnquiriesHome = () => {
           const enquiryId = getEnquiryId(item);
           if (!enquiryId) return item;
           const detailResponse = await getFranchiseAdminEnquiryById(access_token, enquiryId);
-          const detail = detailResponse?.data ?? detailResponse ?? {};
+          const detail = unwrapPayload(detailResponse);
           return { ...item, ...detail };
         }),
       );
@@ -103,7 +178,8 @@ const EnquiriesHome = () => {
 
   useEffect(() => {
     if (!access_token) return;
-    loadSalesTeam();
+    loadTeam();
+    loadAssignmentSettings();
   }, [access_token]);
 
   useEffect(() => {
@@ -111,41 +187,72 @@ const EnquiriesHome = () => {
     loadEnquiries();
   }, [access_token, currentPage, pageLimit]);
 
-  const handleAssign = async (enquiryId) => {
+  const handleToggleAutoAssign = async () => {
+    const next = !autoAssign;
+    try {
+      setSettingsSaving(true);
+      setError("");
+      setSuccess("");
+      const response = await patchFranchiseAdminEnquiryAssignmentSettings(access_token, {
+        autoAssign: next,
+      });
+      const saved = pickAutoAssign(unwrapPayload(response));
+      setAutoAssign(saved !== undefined ? saved : next);
+      setSuccess(
+        next
+          ? "Auto-assign is on. New enquiries will be assigned automatically."
+          : "Auto-assign is off. Assign sales and counsellor manually per enquiry.",
+      );
+    } catch (toggleError) {
+      setError(toggleError?.response?.data?.message || "Could not update auto-assign setting.");
+    } finally {
+      setSettingsSaving(false);
+    }
+  };
+
+  const getTeamDraft = (enquiryId) =>
+    teamByEnquiry[enquiryId] || { salesId: "", counsellorId: "" };
+
+  const setTeamDraft = (enquiryId, patch) => {
+    setTeamByEnquiry((prev) => ({
+      ...prev,
+      [enquiryId]: {
+        salesId: "",
+        counsellorId: "",
+        ...prev[enquiryId],
+        ...patch,
+      },
+    }));
+  };
+
+  const handleAssignTeam = async (enquiryId) => {
     if (!enquiryId) return;
-    const mode = assignModeByEnquiry[enquiryId] || "auto";
-    const salesId = salesByEnquiry[enquiryId] || "";
-    if (mode === "manual" && !salesId) {
-      setError("Select a sales user for manual assignment.");
+    const { salesId, counsellorId } = getTeamDraft(enquiryId);
+    if (!salesId) {
+      setError("Select a sales person.");
+      return;
+    }
+    if (!counsellorId) {
+      setError("Select a counsellor.");
       return;
     }
     try {
       setAssigningId(enquiryId);
       setError("");
       setSuccess("");
-      const body =
-        mode === "manual"
-          ? { assignmentMode: "manual", salesId }
-          : { assignmentMode: "auto" };
-      await assignFranchiseAdminEnquiry(access_token, enquiryId, body);
-      setSuccess(
-        mode === "manual"
-          ? "Enquiry assigned to the selected sales person."
-          : "Enquiry auto-assigned to the least-loaded sales person in your branch.",
-      );
-      setSalesByEnquiry((prev) => {
-        const next = { ...prev };
-        delete next[enquiryId];
-        return next;
+      await assignFranchiseAdminEnquiryTeam(access_token, enquiryId, {
+        salesId,
+        counsellorId,
       });
-      setAssignModeByEnquiry((prev) => {
+      setSuccess("Sales and counsellor assigned to this enquiry.");
+      setTeamByEnquiry((prev) => {
         const next = { ...prev };
         delete next[enquiryId];
         return next;
       });
       await loadEnquiries();
     } catch (assignError) {
-      setError(assignError?.response?.data?.message || "Failed to assign enquiry.");
+      setError(assignError?.response?.data?.message || "Failed to assign team.");
     } finally {
       setAssigningId("");
     }
@@ -161,6 +268,43 @@ const EnquiriesHome = () => {
         <p className="text-sm text-white/90 md:text-base">
           Enquiries submitted for your franchise.
         </p>
+      </div>
+
+      <div className="mb-4 flex flex-col gap-4 rounded-xl border border-white/20 bg-white/10 p-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-white/70">
+            Enquiry assignment
+          </p>
+          <p className="mt-1 text-sm text-white/85">
+            {autoAssign
+              ? "New enquiries are auto-assigned to sales and counsellor in your branch."
+              : "Turn on auto-assign or pick sales and counsellor manually for each enquiry."}
+          </p>
+        </div>
+        <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-white/15 bg-white/5 px-4 py-3">
+          <span className="text-sm font-semibold text-white">Auto-assign</span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={autoAssign}
+            disabled={settingsLoading || settingsSaving}
+            onClick={handleToggleAutoAssign}
+            className={[
+              "relative h-7 w-12 shrink-0 rounded-full transition-colors disabled:opacity-50",
+              autoAssign ? "bg-[#5eead4]" : "bg-white/25",
+            ].join(" ")}
+          >
+            <span
+              className={[
+                "absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform",
+                autoAssign ? "translate-x-5" : "translate-x-0",
+              ].join(" ")}
+            />
+          </button>
+          <span className="text-xs font-medium text-white/70">
+            {settingsLoading ? "Loading…" : settingsSaving ? "Saving…" : autoAssign ? "On" : "Off"}
+          </span>
+        </label>
       </div>
 
       <div className="mb-4 rounded-xl border border-white/20 bg-white/10 p-4">
@@ -181,42 +325,45 @@ const EnquiriesHome = () => {
       ) : null}
 
       <div className="overflow-x-auto rounded-xl border border-white/20 bg-white/5">
-        <table className="min-w-[900px] w-full table-fixed border-collapse divide-y divide-white/15">
+        <table className="min-w-[1020px] w-full table-fixed border-collapse divide-y divide-white/15">
           <thead className="bg-white/20">
             <tr>
-              <th className="w-[5%] border-r border-white/15 px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
+              <th className="w-[4%] border-r border-white/15 px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
                 #
               </th>
-              <th className="w-[14%] border-r border-white/15 px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
+              <th className="w-[12%] border-r border-white/15 px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
                 Name
               </th>
-              <th className="w-[16%] border-r border-white/15 px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
+              <th className="w-[14%] border-r border-white/15 px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
                 Contact
               </th>
-              <th className="w-[14%] border-r border-white/15 px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
+              <th className="w-[12%] border-r border-white/15 px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
                 Service
               </th>
-              <th className="w-[16%] border-r border-white/15 px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
-                Preferred branch
+              <th className="w-[12%] border-r border-white/15 px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
+                Branch
               </th>
-              <th className="w-[20%] border-r border-white/15 px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
-                Sales assignment
+              <th className="w-[12%] border-r border-white/15 px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
+                Sales
               </th>
-              <th className="w-[15%] px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
-                Action
+              <th className="w-[12%] border-r border-white/15 px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
+                Counsellor
+              </th>
+              <th className="w-[22%] px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
+                Assignment
               </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/10">
             {loading ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-sm text-white">
+                <td colSpan={8} className="px-4 py-8 text-center text-sm text-white">
                   Loading enquiries…
                 </td>
               </tr>
             ) : enquiries.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-sm text-white">
+                <td colSpan={8} className="px-4 py-8 text-center text-sm text-white">
                   No enquiries for your franchise right now.
                 </td>
               </tr>
@@ -225,7 +372,10 @@ const EnquiriesHome = () => {
                 const enquiryId = getEnquiryId(row);
                 const isAssigning = assigningId === enquiryId;
                 const assignedSalesId = getAssignedSalesId(row);
-                const isAlreadyAssigned = Boolean(assignedSalesId);
+                const assignedCounsellorId = getAssignedCounsellorId(row);
+                const isFullyAssigned = Boolean(assignedSalesId && assignedCounsellorId);
+                const draft = getTeamDraft(enquiryId);
+
                 return (
                   <tr
                     key={enquiryId || `e-${index}`}
@@ -247,68 +397,75 @@ const EnquiriesHome = () => {
                     <td className="border-r border-white/10 px-3 py-4 text-center text-sm text-white/90">
                       {row?.preferredBranchName || row?.preferredFranchiseId || "—"}
                     </td>
-                    <td className="border-r border-white/10 px-3 py-4 text-center align-middle">
-                      {isAlreadyAssigned ? (
-                        <span className="inline-flex rounded-md border border-emerald-300/40 bg-emerald-500/15 px-2 py-1 text-xs font-semibold text-emerald-100">
-                          Assigned
+                    <td className="border-r border-white/10 px-3 py-4 text-center text-sm text-white/90">
+                      {assignedSalesId ? (
+                        <AssigneeCell
+                          row={row}
+                          nestedField={row?.assignedSales ? "assignedSales" : "assignedTo"}
+                          accentClass="border-emerald-300/40 bg-emerald-500/15 text-emerald-100"
+                        />
+                      ) : (
+                        <span className="text-xs text-white/50">Unassigned</span>
+                      )}
+                    </td>
+                    <td className="border-r border-white/10 px-3 py-4 text-center text-sm text-white/90">
+                      {assignedCounsellorId ? (
+                        <AssigneeCell
+                          row={row}
+                          nestedField="assignedCounsellor"
+                          accentClass="border-[#c9a86c]/40 bg-[#c9a86c]/15 text-[#fde68a]"
+                        />
+                      ) : (
+                        <span className="text-xs text-white/50">Unassigned</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-4 text-center align-middle">
+                      {isFullyAssigned ? (
+                        <span className="text-xs font-semibold text-emerald-100">Team assigned</span>
+                      ) : autoAssign ? (
+                        <span className="text-xs text-white/70">
+                          Waiting for auto-assign…
                         </span>
                       ) : (
-                        <>
-                          <div className="mb-2">
-                            <select
-                              value={assignModeByEnquiry[enquiryId] || "auto"}
-                              onChange={(e) =>
-                                setAssignModeByEnquiry((prev) => ({
-                                  ...prev,
-                                  [enquiryId]: e.target.value,
-                                }))
-                              }
-                              className="w-full max-w-[200px] rounded-lg border border-white/25 bg-[#133726] px-2 py-1.5 text-xs text-white outline-none focus:border-[#5eead4]"
-                            >
-                              <option value="auto">Auto</option>
-                              <option value="manual">Manual</option>
-                            </select>
-                          </div>
+                        <div className="mx-auto flex max-w-[280px] flex-col gap-2">
                           <select
-                            value={salesByEnquiry[enquiryId] ?? ""}
+                            value={draft.salesId}
                             onChange={(e) =>
-                              setSalesByEnquiry((prev) => ({
-                                ...prev,
-                                [enquiryId]: e.target.value,
-                              }))
+                              setTeamDraft(enquiryId, { salesId: e.target.value })
                             }
-                            disabled={(assignModeByEnquiry[enquiryId] || "auto") !== "manual"}
-                            className="w-full max-w-[200px] rounded-lg border border-white/25 bg-[#133726] px-2 py-2 text-xs text-white outline-none focus:border-[#5eead4]"
+                            className="w-full rounded-lg border border-white/25 bg-[#133726] px-2 py-1.5 text-xs text-white outline-none focus:border-[#5eead4]"
                           >
-                            <option value="">
-                              {(assignModeByEnquiry[enquiryId] || "auto") === "manual"
-                                ? "Select sales user"
-                                : "Auto (least loaded)"}
-                            </option>
+                            <option value="">Select sales</option>
                             {salesTeam.map((member) => (
                               <option key={getUserId(member)} value={getUserId(member)}>
                                 {getUserLabel(member)}
                               </option>
                             ))}
                           </select>
-                        </>
+                          <select
+                            value={draft.counsellorId}
+                            onChange={(e) =>
+                              setTeamDraft(enquiryId, { counsellorId: e.target.value })
+                            }
+                            className="w-full rounded-lg border border-white/25 bg-[#133726] px-2 py-1.5 text-xs text-white outline-none focus:border-[#5eead4]"
+                          >
+                            <option value="">Select counsellor</option>
+                            {counsellorTeam.map((member) => (
+                              <option key={getUserId(member)} value={getUserId(member)}>
+                                {getUserLabel(member)}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            type="button"
+                            disabled={isAssigning}
+                            onClick={() => handleAssignTeam(enquiryId)}
+                            className={`${rowActionButtonClass} border-[#5eead4]/50 bg-[#5eead4]/15 text-[#a7f3d0] hover:bg-[#5eead4]/25 disabled:opacity-50`}
+                          >
+                            {isAssigning ? "Assigning…" : "Assign team"}
+                          </button>
+                        </div>
                       )}
-                    </td>
-                    <td className="px-3 py-4 text-center align-middle">
-                      <button
-                        type="button"
-                        disabled={isAssigning || isAlreadyAssigned}
-                        onClick={() => handleAssign(enquiryId)}
-                        className={`${rowActionButtonClass} border-[#5eead4]/50 bg-[#5eead4]/15 text-[#a7f3d0] hover:bg-[#5eead4]/25 disabled:opacity-50`}
-                      >
-                        {isAlreadyAssigned
-                          ? "Already assigned"
-                          : isAssigning
-                          ? "Assigning…"
-                          : (assignModeByEnquiry[enquiryId] || "auto") === "manual"
-                            ? "Assign (Manual)"
-                            : "Assign (Auto)"}
-                      </button>
                     </td>
                   </tr>
                 );

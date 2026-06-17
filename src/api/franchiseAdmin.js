@@ -41,6 +41,45 @@ export const createFranchiseAdminUser = async (token, payload) => {
   return response.data;
 };
 
+/** GET /franchise-admin/users/{userId} */
+export const getFranchiseAdminUserById = async (token, userId) => {
+  const response = await franchiseAdminClient.get(
+    `/franchise-admin/users/${userId}`,
+    authHeaders(token),
+  );
+  return response.data;
+};
+
+/** PATCH /franchise-admin/users/{userId} */
+export const updateFranchiseAdminUser = async (token, userId, payload) => {
+  const response = await franchiseAdminClient.patch(
+    `/franchise-admin/users/${userId}`,
+    payload,
+    authHeaders(token),
+  );
+  return response.data;
+};
+
+/** PATCH /franchise-admin/users/{userId}/profile-photo */
+export const patchFranchiseAdminUserProfilePhoto = async (token, userId, payload) => {
+  const response = await franchiseAdminClient.patch(
+    `/franchise-admin/users/${userId}/profile-photo`,
+    payload,
+    authHeaders(token),
+  );
+  return response.data;
+};
+
+/** PATCH /franchise-admin/users/{userId}/block — { isActive } */
+export const blockFranchiseAdminUser = async (token, userId, payload) => {
+  const response = await franchiseAdminClient.patch(
+    `/franchise-admin/users/${userId}/block`,
+    payload,
+    authHeaders(token),
+  );
+  return response.data;
+};
+
 /** GET /franchise-admin/enquiries */
 export const getFranchiseAdminEnquiries = async (token, params = {}) => {
   const response = await franchiseAdminClient.get("/franchise-admin/enquiries", {
@@ -68,10 +107,29 @@ export const getFranchiseAdminEnquiryById = async (token, enquiryId) => {
   return response.data;
 };
 
-/** PATCH /franchise-admin/enquiries/{enquiryId}/assign — optional { salesId } */
-export const assignFranchiseAdminEnquiry = async (token, enquiryId, body = {}) => {
+/** GET /franchise-admin/settings/enquiry-assignment */
+export const getFranchiseAdminEnquiryAssignmentSettings = async (token) => {
+  const response = await franchiseAdminClient.get(
+    "/franchise-admin/settings/enquiry-assignment",
+    authHeaders(token),
+  );
+  return response.data;
+};
+
+/** PATCH /franchise-admin/settings/enquiry-assignment — { autoAssign: boolean } */
+export const patchFranchiseAdminEnquiryAssignmentSettings = async (token, payload) => {
   const response = await franchiseAdminClient.patch(
-    `/franchise-admin/enquiries/${enquiryId}/assign`,
+    "/franchise-admin/settings/enquiry-assignment",
+    payload,
+    authHeaders(token),
+  );
+  return response.data;
+};
+
+/** PATCH /franchise-admin/enquiries/{enquiryId}/assign-team — { salesId, counsellorId } */
+export const assignFranchiseAdminEnquiryTeam = async (token, enquiryId, body = {}) => {
+  const response = await franchiseAdminClient.patch(
+    `/franchise-admin/enquiries/${enquiryId}/assign-team`,
     body,
     authHeaders(token),
   );

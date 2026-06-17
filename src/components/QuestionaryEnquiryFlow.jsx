@@ -4,19 +4,27 @@ import {
   getQuestionariesByService,
   QuestionaryService,
 } from "../api/questionaries";
+import { createCompletePackageEnquiry } from "../api/enquire";
 import PlaceSearchAutocomplete from "./PlaceSearchAutocomplete";
 import {
   fetchNearestFromCoords,
   normalizeMapsPlace,
 } from "../utils/nearestFranchiseLocation";
 import BrandText from "./BrandText";
-
-const COMPLETE_PACKAGE_SERVICES = [
-  QuestionaryService.SKILLS_BEHIND_STUDIES,
-  QuestionaryService.BEHAVIORAL_AWARENESS,
-  QuestionaryService.RELATIONSHIP_AWARENESS,
-  QuestionaryService.TALENT_AWARENESS,
-];
+import {
+  buildEnquiryAnswersPayload,
+  formatEnquirySubmitError,
+  getQuestionKey,
+  getRequiredSelectionCount,
+  getSelectionHelperText,
+  getSelectedCount,
+  isAnswerComplete,
+  isMultiSelectQuestion,
+  isTextQuestion,
+  mergeCompletePackageQuestions,
+  normalizeQuestionariesList,
+  normalizeStoredAnswer,
+} from "../utils/questionary";
 
 export default function QuestionaryEnquiryFlow({
   service,
@@ -60,40 +68,18 @@ export default function QuestionaryEnquiryFlow({
         setCombinedQuestions(null);
 
         if (isCompletePackage) {
-          const [packageRes, ...serviceResponses] = await Promise.all([
-            getQuestionariesByService(null, QuestionaryService.COMPLETE_PACKAGE).catch(
-              () => null,
-            ),
-            ...COMPLETE_PACKAGE_SERVICES.map((svc) =>
-              getQuestionariesByService(null, svc),
-            ),
-          ]);
-
-          const packagePayload = packageRes?.data ?? packageRes;
-          const packageQuestionary = Array.isArray(packagePayload)
-            ? packagePayload[0]
-            : packagePayload;
-          setQuestionary(packageQuestionary || null);
-
-          const merged = serviceResponses.flatMap((res, serviceIndex) => {
-            const payload = res?.data ?? res;
-            const picked = Array.isArray(payload) ? payload[0] : payload;
-            const items = Array.isArray(picked?.questions) ? picked.questions : [];
-            return items
-              .sort((a, b) => (a?.order ?? 0) - (b?.order ?? 0))
-              .map((q, idx) => ({
-                ...q,
-                _combinedService: COMPLETE_PACKAGE_SERVICES[serviceIndex],
-                _combinedQuestionaryId: picked?._id || "",
-                _combinedOrder: idx,
-              }));
-          });
+          const response = await getQuestionariesByService(
+            null,
+            QuestionaryService.COMPLETE_PACKAGE,
+          );
+          const forms = normalizeQuestionariesList(response);
+          const merged = mergeCompletePackageQuestions(forms);
 
           if (!merged.length) {
-            throw new Error(
-              "No questions configured for Complete Package services.",
-            );
+            throw new Error("No questions configured for Complete Package.");
           }
+
+          setQuestionary(forms[0] || null);
           setCombinedQuestions(merged);
         } else {
           const response = await getQuestionariesByService(null, service);
@@ -129,9 +115,21 @@ export default function QuestionaryEnquiryFlow({
   );
 
   const currentQuestion = questions[currentIndex];
-  const selectedValue = currentQuestion
-    ? answersMap[currentQuestion?._id || `${currentIndex}`]
+  const currentQuestionKey = currentQuestion
+    ? getQuestionKey(currentQuestion, currentIndex)
     : "";
+  const currentAnswer = currentQuestion
+    ? normalizeStoredAnswer(currentQuestion, answersMap[currentQuestionKey])
+    : "";
+  const canProceed = currentQuestion
+    ? isAnswerComplete(currentQuestion, answersMap[currentQuestionKey])
+    : false;
+  const selectionCount = currentQuestion
+    ? getSelectedCount(currentQuestion, answersMap[currentQuestionKey])
+    : 0;
+  const requiredSelectionCount = currentQuestion
+    ? getRequiredSelectionCount(currentQuestion)
+    : 1;
 
   const pastQuestions =
     started && questions.length > 0 && currentIndex >= questions.length;
@@ -145,14 +143,35 @@ export default function QuestionaryEnquiryFlow({
   const showDeclined =
     pastQuestions && hasInterstitial && enquiryIntent === "no";
 
-  const handleOptionChange = (value) => {
+  const handleSingleOptionChange = (value) => {
     if (!currentQuestion) return;
-    const key = currentQuestion?._id || `${currentIndex}`;
-    setAnswersMap((prev) => ({ ...prev, [key]: value }));
+    setAnswersMap((prev) => ({ ...prev, [currentQuestionKey]: value }));
+  };
+
+  const handleMultiOptionToggle = (option) => {
+    if (!currentQuestion) return;
+    const limit = getRequiredSelectionCount(currentQuestion);
+    const current = Array.isArray(answersMap[currentQuestionKey])
+      ? [...answersMap[currentQuestionKey]]
+      : [];
+    const index = current.indexOf(option);
+
+    if (index >= 0) {
+      current.splice(index, 1);
+    } else if (current.length < limit) {
+      current.push(option);
+    }
+
+    setAnswersMap((prev) => ({ ...prev, [currentQuestionKey]: current }));
+  };
+
+  const handleTextAnswerChange = (value) => {
+    if (!currentQuestion) return;
+    setAnswersMap((prev) => ({ ...prev, [currentQuestionKey]: value }));
   };
 
   const handleNext = () => {
-    if (!currentQuestion || !selectedValue) return;
+    if (!currentQuestion || !canProceed) return;
     setCurrentIndex((prev) => prev + 1);
   };
 
@@ -227,19 +246,7 @@ export default function QuestionaryEnquiryFlow({
         throw new Error("All enquiry fields are required.");
       }
 
-      const submitQuestionaryId =
-        questionary?._id || questions.find((q) => q?._combinedQuestionaryId)?._combinedQuestionaryId;
-      if (!submitQuestionaryId) throw new Error("Questionary not found.");
-
-      const answers = questions.map((question, index) => ({
-        questionId: question?._id || `${index}`,
-        questionIndex: index,
-        value: answersMap[question?._id || `${index}`] || "",
-        prompt: question?.prompt || "",
-        type: question?.type || "single_choice",
-        service: question?._combinedService || service,
-        sourceQuestionaryId: question?._combinedQuestionaryId || questionary?._id || "",
-      }));
+      const answers = buildEnquiryAnswersPayload(questions, answersMap, service);
 
       let latitude = enquiryLocation?.latitude ?? null;
       let longitude = enquiryLocation?.longitude ?? null;
@@ -259,12 +266,17 @@ export default function QuestionaryEnquiryFlow({
         nearestFranchiseId: nearest?.id || null,
         nearestFranchiseName: nearest?.name || null,
       };
-      if (isCompletePackage) {
-        payload.packageType = "complete_package";
-        payload.selectedServices = COMPLETE_PACKAGE_SERVICES;
-      }
 
-      await createQuestionaryEnquiry(null, submitQuestionaryId, payload);
+      if (isCompletePackage) {
+        await createCompletePackageEnquiry(payload);
+      } else {
+        const submitQuestionaryId = questionary?._id;
+        if (!submitQuestionaryId) throw new Error("Questionary not found.");
+        await createQuestionaryEnquiry(null, submitQuestionaryId, {
+          ...payload,
+          service,
+        });
+      }
 
       setSuccess("Enquiry submitted successfully.");
       setStarted(false);
@@ -277,7 +289,7 @@ export default function QuestionaryEnquiryFlow({
       setEnquiryLocation(null);
       setPlacePickerKey((k) => k + 1);
     } catch (submitError) {
-      setError(submitError?.response?.data?.message || submitError.message);
+      setError(formatEnquirySubmitError(submitError));
     } finally {
       setSubmitting(false);
     }
@@ -505,32 +517,69 @@ export default function QuestionaryEnquiryFlow({
           <h4 className="mt-3 text-lg font-semibold leading-snug text-[#0a1a12] sm:text-xl">
             {currentQuestion.prompt}
           </h4>
+          {getSelectionHelperText(currentQuestion) ? (
+            <p className="mt-2 text-sm font-medium text-[#0f766e]">
+              {getSelectionHelperText(currentQuestion)}
+              {isMultiSelectQuestion(currentQuestion)
+                ? ` (${selectionCount}/${requiredSelectionCount} selected)`
+                : ""}
+            </p>
+          ) : null}
 
-          <div className="mt-4 space-y-2.5">
-            {(currentQuestion.options || []).map((option, idx) => {
-              const active = selectedValue === option;
-              return (
-                <label
-                  key={`${currentQuestion._id || currentIndex}-${idx}`}
-                  className={`block cursor-pointer rounded-lg border px-4 py-3 text-base font-medium transition ${
-                    active
-                      ? "border-[#0f766e] bg-[#ccfbf1] text-[#042f2e] shadow-sm"
-                      : "border-[#0f2e1a]/15 bg-white text-[#0f2e1a] hover:border-[#0d9488]/50"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name={`question-${currentQuestion._id || currentIndex}`}
-                    value={option}
-                    checked={active}
-                    onChange={() => handleOptionChange(option)}
-                    className="hidden"
-                  />
-                  {option}
-                </label>
-              );
-            })}
-          </div>
+          {isTextQuestion(currentQuestion) ? (
+            <textarea
+              value={typeof currentAnswer === "string" ? currentAnswer : ""}
+              onChange={(event) => handleTextAnswerChange(event.target.value)}
+              placeholder={currentQuestion.placeholder || "Your answer"}
+              rows={4}
+              className="mt-4 w-full rounded-lg border border-[#0f2e1a]/15 bg-white px-4 py-3 text-base text-[#0f2e1a] outline-none placeholder:text-[#0f2e1a]/45 focus:border-[#0d9488]/70"
+            />
+          ) : (
+            <div className="mt-4 space-y-2.5">
+              {(currentQuestion.options || []).map((option, idx) => {
+                const selectedValues = isMultiSelectQuestion(currentQuestion)
+                  ? Array.isArray(answersMap[currentQuestionKey])
+                    ? answersMap[currentQuestionKey]
+                    : []
+                  : [];
+                const active = isMultiSelectQuestion(currentQuestion)
+                  ? selectedValues.includes(option)
+                  : currentAnswer === option;
+                const atLimit =
+                  isMultiSelectQuestion(currentQuestion) &&
+                  !active &&
+                  selectedValues.length >= requiredSelectionCount;
+
+                return (
+                  <label
+                    key={`${currentQuestion._id || currentIndex}-${idx}`}
+                    className={`block rounded-lg border px-4 py-3 text-base font-medium transition ${
+                      active
+                        ? "cursor-pointer border-[#0f766e] bg-[#ccfbf1] text-[#042f2e] shadow-sm"
+                        : atLimit
+                          ? "cursor-not-allowed border-[#0f2e1a]/10 bg-[#f8faf8] text-[#0f2e1a]/45"
+                          : "cursor-pointer border-[#0f2e1a]/15 bg-white text-[#0f2e1a] hover:border-[#0d9488]/50"
+                    }`}
+                  >
+                    <input
+                      type={isMultiSelectQuestion(currentQuestion) ? "checkbox" : "radio"}
+                      name={`question-${currentQuestionKey}`}
+                      value={option}
+                      checked={active}
+                      disabled={atLimit}
+                      onChange={() =>
+                        isMultiSelectQuestion(currentQuestion)
+                          ? handleMultiOptionToggle(option)
+                          : handleSingleOptionChange(option)
+                      }
+                      className="hidden"
+                    />
+                    {option}
+                  </label>
+                );
+              })}
+            </div>
+          )}
 
           <div className="mt-5 flex flex-wrap gap-2">
             <button
@@ -544,7 +593,7 @@ export default function QuestionaryEnquiryFlow({
             <button
               type="button"
               onClick={handleNext}
-              disabled={!selectedValue}
+              disabled={!canProceed}
               className="rounded-lg bg-linear-to-r from-[#c9a86c] to-[#5eead4] px-5 py-2.5 text-sm font-semibold text-[#0f2e1a] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {currentIndex === questions.length - 1 ? "Continue" : "Next"}

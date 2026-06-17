@@ -1,13 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   confirmCounsellorAudio,
-  confirmCounsellorFingerprint,
   confirmCounsellorReport,
   getCounsellorAudioList,
-  getCounsellorFingerprint,
   getCounsellorReportList,
   presignCounsellorAudio,
-  presignCounsellorFingerprint,
   presignCounsellorReport,
 } from "../../../../api/counsellor";
 import { formatDateTime, getId } from "../../../utils/format";
@@ -18,7 +15,6 @@ import {
   pickPresignUpload,
   putFileToPresignedUrl,
   resolveReportContentType,
-  unwrapApiPayload,
 } from "../../../utils/upload";
 
 const panelClass = "mt-6 rounded-xl border border-white/20 bg-white/10 p-4";
@@ -33,12 +29,14 @@ const getMediaItemLabel = (item, index, fallbackPrefix) =>
   item?.name ||
   `${fallbackPrefix} ${index + 1}`;
 
-export default function AssignedUserMediaPanel({ enquiryId, accessToken }) {
-  const [fingerprint, setFingerprint] = useState(null);
+export default function AssignedUserMediaPanel({
+  enquiryId,
+  accessToken,
+  fingerprintMeta = null,
+}) {
   const [audioItems, setAudioItems] = useState([]);
   const [reportItems, setReportItems] = useState([]);
   const [mediaLoading, setMediaLoading] = useState(false);
-  const [fingerprintUploading, setFingerprintUploading] = useState(false);
   const [audioUploading, setAudioUploading] = useState(false);
   const [reportUploading, setReportUploading] = useState(false);
   const [mediaError, setMediaError] = useState("");
@@ -51,21 +49,10 @@ export default function AssignedUserMediaPanel({ enquiryId, accessToken }) {
     try {
       setMediaLoading(true);
       setMediaError("");
-      const [fpRes, audioRes, reportsRes] = await Promise.all([
-        getCounsellorFingerprint(accessToken, resolvedEnquiryId).catch(() => null),
+      const [audioRes, reportsRes] = await Promise.all([
         getCounsellorAudioList(accessToken, resolvedEnquiryId).catch(() => ({ items: [] })),
         getCounsellorReportList(accessToken, resolvedEnquiryId).catch(() => ({ items: [] })),
       ]);
-      const fpPayload = unwrapApiPayload(fpRes);
-      const fpRecord = fpPayload?.fingerprint ?? fpPayload;
-      const hasFingerprint =
-        fpRecord &&
-        (fpRecord.url ||
-          fpRecord.imageUrl ||
-          fpRecord.downloadUrl ||
-          fpRecord.signedUrl ||
-          fpRecord.key);
-      setFingerprint(hasFingerprint ? fpRecord : null);
       setAudioItems(normalizeMediaList(audioRes));
       setReportItems(normalizeMediaList(reportsRes));
     } catch (fetchError) {
@@ -78,7 +65,6 @@ export default function AssignedUserMediaPanel({ enquiryId, accessToken }) {
   useEffect(() => {
     if (resolvedEnquiryId && accessToken) loadMedia();
     else {
-      setFingerprint(null);
       setAudioItems([]);
       setReportItems([]);
     }
@@ -121,29 +107,6 @@ export default function AssignedUserMediaPanel({ enquiryId, accessToken }) {
     } finally {
       setUploading(false);
     }
-  };
-
-  const handleFingerprintFile = (event) => {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      setMediaError("Fingerprint must be an image file.");
-      return;
-    }
-    runPresignUpload({
-      file,
-      presignFn: presignCounsellorFingerprint,
-      confirmFn: confirmCounsellorFingerprint,
-      setUploading: setFingerprintUploading,
-      successMessage: "Fingerprint uploaded (retained 48 hours).",
-      getPresignBody: (f) => ({
-        contentType: f.type,
-        filename: f.name,
-        size: f.size,
-      }),
-      buildConfirmBody: buildConfirmPayload,
-    });
   };
 
   const handleAudioFile = (event) => {
@@ -189,19 +152,20 @@ export default function AssignedUserMediaPanel({ enquiryId, accessToken }) {
     });
   };
 
-  const fingerprintUrl =
-    fingerprint?.url ||
-    fingerprint?.imageUrl ||
-    fingerprint?.downloadUrl ||
-    fingerprint?.signedUrl ||
-    "";
+  const hasFingerprint =
+    fingerprintMeta &&
+    (fingerprintMeta._id ||
+      fingerprintMeta.id ||
+      fingerprintMeta.uploadedAt ||
+      fingerprintMeta.expiresAt);
 
   return (
     <div className={panelClass}>
-      <h3 className="text-base font-semibold text-white">Fingerprint, audio & reports</h3>
+      <h3 className="text-base font-semibold text-white">Audio & reports</h3>
       <p className="mt-1 text-xs text-white/70">
-        Upload files for this member. Audio and reports are only downloadable by the member after
-        they complete full program payment — you cannot download uploads from here.
+        Upload audio and reports for this member. Fingerprint scans are uploaded by the member in
+        their portal. Audio and reports are only downloadable by the member after full program
+        payment.
       </p>
 
       {mediaError ? (
@@ -215,44 +179,40 @@ export default function AssignedUserMediaPanel({ enquiryId, accessToken }) {
         </p>
       ) : null}
 
+      <div className="mt-4 rounded-xl border border-white/15 bg-white/8 p-3">
+        <p className="text-sm font-medium text-white">Member fingerprint</p>
+        {hasFingerprint ? (
+          <div className="mt-2 space-y-1 text-sm text-white/75">
+            {fingerprintMeta?.fileName ? (
+              <p>
+                <span className="text-white/55">File:</span> {fingerprintMeta.fileName}
+              </p>
+            ) : null}
+            {fingerprintMeta?.uploadedAt ? (
+              <p>
+                <span className="text-white/55">Uploaded:</span>{" "}
+                {formatDateTime(fingerprintMeta.uploadedAt)}
+              </p>
+            ) : null}
+            {fingerprintMeta?.expiresAt ? (
+              <p>
+                <span className="text-white/55">Expires:</span>{" "}
+                {formatDateTime(fingerprintMeta.expiresAt)}
+              </p>
+            ) : null}
+            <p className="text-xs text-white/50">
+              Uploaded by the member. Image is not viewable from counsellor access.
+            </p>
+          </div>
+        ) : (
+          <p className="mt-2 text-sm text-white/60">No active fingerprint from the member yet.</p>
+        )}
+      </div>
+
       {mediaLoading ? (
         <p className="mt-4 text-sm text-white/70">Loading media…</p>
       ) : (
         <>
-          <div className="mt-4 rounded-xl border border-white/15 bg-white/8 p-3">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm font-medium text-white">Fingerprint</p>
-              <label className={buttonClass}>
-                {fingerprintUploading ? "Uploading…" : "Upload image"}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  disabled={fingerprintUploading}
-                  onChange={handleFingerprintFile}
-                />
-              </label>
-            </div>
-            {fingerprintUrl ? (
-              <div className="mt-3">
-                <img
-                  src={fingerprintUrl}
-                  alt="Fingerprint scan"
-                  className="max-h-48 w-full rounded-lg border border-white/20 object-contain bg-black/20"
-                />
-                {fingerprint?.expiresAt ? (
-                  <p className="mt-2 text-xs text-amber-200/90">
-                    Expires {formatDateTime(fingerprint.expiresAt)}
-                  </p>
-                ) : (
-                  <p className="mt-2 text-xs text-white/60">Active · 48h retention</p>
-                )}
-              </div>
-            ) : (
-              <p className="mt-2 text-sm text-white/60">No active fingerprint on file.</p>
-            )}
-          </div>
-
           <div className="mt-4 rounded-xl border border-white/15 bg-white/8 p-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-sm font-medium text-white">Audio recordings</p>

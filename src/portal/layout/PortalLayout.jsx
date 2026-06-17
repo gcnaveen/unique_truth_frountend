@@ -4,12 +4,20 @@ import { useDispatch, useSelector } from "react-redux";
 import { getPortalMe } from "../../api/portal";
 import { logout, updateUser } from "../../reducers/user";
 import PaymentGate from "../components/PaymentGate";
+import PortalFingerprintReminder from "../components/PortalFingerprintReminder";
 import PortalSiteHeader from "../components/PortalSiteHeader";
+import { pickUserProfilePhotoUrl } from "../../utils/profilePhoto";
+import { pickProfileEdit } from "../../utils/profileEdit";
 import {
   canAccessPortalDashboard,
   pickPortalAccessFromLogin,
   unwrapPortalPayload,
 } from "../utils/access";
+import {
+  checkPortalFingerprintStatus,
+  loadPortalEnquiryList,
+  resolvePrimaryEnquiryId,
+} from "../utils/fingerprint";
 
 const navItems = [
   { path: "/portal/dashboard", label: "Home", end: true },
@@ -28,6 +36,8 @@ export default function PortalLayout() {
   );
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [fingerprintReminderOpen, setFingerprintReminderOpen] = useState(false);
+  const [primaryEnquiryId, setPrimaryEnquiryId] = useState("");
 
   const refreshProfile = useCallback(async () => {
     if (!access_token) return null;
@@ -35,12 +45,15 @@ export default function PortalLayout() {
     const data = unwrapPortalPayload(response);
     setProfile(data);
     const access = pickPortalAccessFromLogin(data);
-    dispatch(
+        dispatch(
       updateUser({
         canAccessDashboard: access.canAccessDashboard,
         advancePayment: access.advancePayment,
         fullPayment: access.fullPayment,
         counselingLevel: access.counselingLevel,
+        name: data.name,
+        profilePhotoUrl: pickUserProfilePhotoUrl(data),
+        profileEdit: pickProfileEdit(data, { isPortalUser: true }),
       }),
     );
     return data;
@@ -62,6 +75,43 @@ export default function PortalLayout() {
   }, [access_token, refreshProfile]);
 
   const hasAccess = canAccessPortalDashboard(profile);
+
+  const refreshFingerprintReminder = useCallback(async () => {
+    if (!access_token || !hasAccess) {
+      setFingerprintReminderOpen(false);
+      return;
+    }
+    if (location.pathname.startsWith("/portal/dashboard/enquiries")) {
+      setFingerprintReminderOpen(false);
+      return;
+    }
+
+    try {
+      const enquiries = await loadPortalEnquiryList(access_token);
+      const enquiryId = resolvePrimaryEnquiryId(enquiries, profile);
+      if (!enquiryId) {
+        setFingerprintReminderOpen(false);
+        return;
+      }
+
+      setPrimaryEnquiryId(enquiryId);
+      const status = await checkPortalFingerprintStatus(access_token, enquiryId);
+      if (status.paymentRequired || status.hasFingerprint) {
+        setFingerprintReminderOpen(false);
+        return;
+      }
+      setFingerprintReminderOpen(true);
+    } catch {
+      setFingerprintReminderOpen(false);
+    }
+  }, [access_token, hasAccess, location.pathname, profile]);
+
+  useEffect(() => {
+    if (!loading && hasAccess) {
+      refreshFingerprintReminder();
+    }
+  }, [loading, hasAccess, location.pathname, refreshFingerprintReminder]);
+
   const displayName = profile?.name || name || "Member";
   const levelLabel = counselingLevel || profile?.counselingLevel;
 
@@ -105,10 +155,16 @@ export default function PortalLayout() {
               isPortalHome ? "" : "mx-auto max-w-6xl px-4 py-8 md:px-8 md:py-10"
             }
           >
-            <Outlet context={{ profile, refreshProfile }} />
+            <Outlet context={{ profile, refreshProfile, refreshFingerprintReminder }} />
           </div>
         )}
       </main>
+
+      <PortalFingerprintReminder
+        open={hasAccess && fingerprintReminderOpen}
+        enquiryId={primaryEnquiryId}
+        onClose={() => setFingerprintReminderOpen(false)}
+      />
     </div>
   );
 }

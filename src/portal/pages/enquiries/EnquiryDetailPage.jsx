@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom";
+import { Link, useNavigate, useOutletContext, useParams, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import {
   getPortalAudioDownload,
@@ -22,7 +22,21 @@ import {
   getPortalMediaItemLabel,
   parsePortalMediaList,
 } from "../../utils/media";
+import PortalFingerprintPanel from "../../components/PortalFingerprintPanel";
+import {
+  FINGERPRINT_SECTION_ID,
+  isFingerprintFocus,
+} from "../../utils/fingerprint";
 import { formatDateTime, formatLabel, getId } from "../../utils/format";
+
+const scrollToFingerprint = () => {
+  requestAnimationFrame(() => {
+    document.getElementById(FINGERPRINT_SECTION_ID)?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  });
+};
 
 function buildUnlockPath(enquiryId) {
   const returnTo = `/portal/dashboard/enquiries/${enquiryId}`;
@@ -123,8 +137,9 @@ function MediaSection({
 
 export default function PortalEnquiryDetailPage() {
   const { enquiryId } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { profile } = useOutletContext() ?? {};
+  const { profile, refreshFingerprintReminder } = useOutletContext() ?? {};
   const { access_token, advancePayment, fullPayment } = useSelector((state) => state.user.value);
   const [detail, setDetail] = useState(null);
   const [audio, setAudio] = useState({ items: [], canDownload: false, paymentRequired: true });
@@ -174,6 +189,11 @@ export default function PortalEnquiryDetailPage() {
   useEffect(() => {
     loadEnquiryMedia();
   }, [loadEnquiryMedia]);
+
+  useEffect(() => {
+    if (!isFingerprintFocus(searchParams) || loading) return;
+    scrollToFingerprint();
+  }, [searchParams, loading]);
 
   const goToUnlockPayment = () => {
     navigate(buildUnlockPath(enquiryId));
@@ -283,6 +303,13 @@ export default function PortalEnquiryDetailPage() {
           {error}
         </div>
       ) : null}
+
+      <PortalFingerprintPanel
+        enquiryId={enquiryId}
+        accessToken={access_token}
+        highlight={isFingerprintFocus(searchParams)}
+        onUploaded={refreshFingerprintReminder}
+      />
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className="rounded-2xl border border-white/15 bg-white/8 p-5">

@@ -10,3 +10,8 @@ export const getCounselingLevels = async () => {
   const response = await publicClient.get("/public/counseling-levels");
   return response.data;
 };
+
+export const getPrivacyConfig = async () => {
+  const response = await publicClient.get("/public/privacy-config");
+  return response.data;
+};

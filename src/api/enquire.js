@@ -25,16 +25,23 @@ export const getEnquiries = async (token, { service } = {}) => {
   return response.data;
 };
 
+/** GET /enquiries/{enquiryId} */
+export const getEnquiryById = async (token, enquiryId) => {
+  const response = await enquireClient.get(
+    `/enquiries/${enquiryId}`,
+    authHeaders(token),
+  );
+  return response.data;
+};
+
 export const getEnquiriesStats = async (token) => {
   const response = await enquireClient.get("/enquiries/stats", authHeaders(token));
   return response.data;
 };
 
-export const getCompletePackages = async (token, { service } = {}) => {
-  const response = await enquireClient.get("/enquiries/complete-packages", {
-    ...authHeaders(token),
-    params: service ? { service } : undefined,
-  });
+/** POST /enquiries/complete-package — no auth */
+export const createCompletePackageEnquiry = async (payload) => {
+  const response = await enquireClient.post("/enquiries/complete-package", payload);
   return response.data;
 };
 

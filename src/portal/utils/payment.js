@@ -1,5 +1,42 @@
+import { getAppOrigin } from "../../../config";
 import { unwrapPortalPayload } from "./access";
 import { getPricingBreakdown } from "./pricing";
+
+const PORTAL_PAYMENT_RETURN_PATH = "/portal/payment/return";
+
+export const buildPortalPaymentReturnUrl = ({
+  type = "advance",
+  enquiryId = "",
+  returnTo = "",
+  status = "",
+} = {}) => {
+  const origin = getAppOrigin();
+  if (!origin) return PORTAL_PAYMENT_RETURN_PATH;
+
+  const params = new URLSearchParams();
+  if (type) params.set("type", type);
+  if (enquiryId) params.set("enquiryId", enquiryId);
+  if (returnTo) params.set("returnTo", returnTo);
+  if (status) params.set("status", status);
+
+  const query = params.toString();
+  return `${origin}${PORTAL_PAYMENT_RETURN_PATH}${query ? `?${query}` : ""}`;
+};
+
+/** Attach return URLs so PhonePe redirects back to this site (not localhost). */
+export const withPortalPaymentRedirect = (payload, options = {}) => {
+  const successUrl = buildPortalPaymentReturnUrl(options);
+  const failureUrl = buildPortalPaymentReturnUrl({ ...options, status: "failed" });
+
+  return {
+    ...payload,
+    redirectUrl: successUrl,
+    returnUrl: successUrl,
+    callbackUrl: successUrl,
+    successUrl,
+    failureUrl,
+  };
+};
 
 export const pickCheckoutUrl = (response) => {
   const data = unwrapPortalPayload(response);

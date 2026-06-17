@@ -77,32 +77,6 @@ export const patchCounsellorSessionStatus = async (token, sessionId, payload) =>
   return response.data;
 };
 
-export const presignCounsellorFingerprint = async (token, enquiryId, payload = {}) => {
-  const response = await counsellorClient.post(
-    `/counsellor/assigned-users/${enquiryId}/fingerprint/presign`,
-    payload,
-    authHeaders(token),
-  );
-  return response.data;
-};
-
-export const confirmCounsellorFingerprint = async (token, enquiryId, payload) => {
-  const response = await counsellorClient.post(
-    `/counsellor/assigned-users/${enquiryId}/fingerprint/confirm`,
-    payload,
-    authHeaders(token),
-  );
-  return response.data;
-};
-
-export const getCounsellorFingerprint = async (token, enquiryId) => {
-  const response = await counsellorClient.get(
-    `/counsellor/assigned-users/${enquiryId}/fingerprint`,
-    authHeaders(token),
-  );
-  return response.data;
-};
-
 export const presignCounsellorAudio = async (token, enquiryId, payload = {}) => {
   const response = await counsellorClient.post(
     `/counsellor/assigned-users/${enquiryId}/audio/presign`,

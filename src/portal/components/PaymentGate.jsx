@@ -8,6 +8,11 @@ import {
   getCounselingLevelLabel,
 } from "../utils/format";
 import { getPricingBreakdown } from "../utils/pricing";
+import {
+  pickCheckoutUrl,
+  stashPaymentReturn,
+  withPortalPaymentRedirect,
+} from "../utils/payment";
 
 const normalizeLevels = (response) => {
   const payload = response?.data ?? response ?? {};
@@ -133,15 +138,27 @@ export default function PaymentGate({ accessToken, profile, onAccessGranted }) {
     try {
       setSubmitting(true);
       setError("");
-      const payload = {
+      const returnTo = "/portal/dashboard";
+      const basePayload = {
         amountRupees: amount,
         counselingLevel: selectedLevel,
       };
-      if (defaultEnquiryId) payload.enquiryId = defaultEnquiryId;
+      if (defaultEnquiryId) basePayload.enquiryId = defaultEnquiryId;
+
+      const payload = withPortalPaymentRedirect(basePayload, {
+        type: "advance",
+        enquiryId: defaultEnquiryId,
+        returnTo,
+      });
+
+      stashPaymentReturn({
+        type: "advance",
+        returnTo,
+        enquiryId: defaultEnquiryId,
+      });
+
       const response = await initiatePortalAdvancePayment(accessToken, payload);
-      const data = response?.data ?? response;
-      const checkoutUrl =
-        data?.checkoutPageUrl || data?.checkoutUrl || data?.redirectUrl || data?.url;
+      const checkoutUrl = pickCheckoutUrl(response);
       if (!checkoutUrl) throw new Error("Checkout URL not returned. Contact support.");
       window.location.href = checkoutUrl;
     } catch (payError) {

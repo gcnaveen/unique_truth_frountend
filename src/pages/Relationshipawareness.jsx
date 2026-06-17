@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { QuestionaryService } from "../api/questionaries";
+import QuestionaryEnquiryFlow from "../components/QuestionaryEnquiryFlow";
 import BrandText from "../components/BrandText";
-import ServiceJourneyCtaButton from "../components/ServiceJourneyCtaButton";
+import ServiceJourneyCtaButton, {
+  SERVICE_ENQUIRY_ANCHOR_ID,
+} from "../components/ServiceJourneyCtaButton";
 
 const useInView = (threshold = 0.1) => {
   const ref = useRef(null);
@@ -98,6 +102,17 @@ const Relationshipawareness = () => {
               <span className="text-[#c9a86c]">Relationship Awareness</span>
             </h1>
           </FadeUp>
+
+          <div id={SERVICE_ENQUIRY_ANCHOR_ID} className="scroll-mt-28 mb-10">
+            <FadeUp delay={120}>
+              <QuestionaryEnquiryFlow
+                service={QuestionaryService.RELATIONSHIP_AWARENESS}
+                interstitialBeforeEnquiry={
+                  "Would you love to build harmonious, fulfilling relationships with deeper understanding? Let's book an appointment with our Unique TRUTH experts."
+                }
+              />
+            </FadeUp>
+          </div>
 
           {/* Benefits grid */}
           <div className="grid md:grid-cols-2 gap-6 mt-12 auto-rows-fr">
@@ -304,7 +319,7 @@ const Relationshipawareness = () => {
                   Discover the authentic connection and deep understanding that
                   leads to harmonious, fulfilling relationships built on truth.
                 </p>
-                <ServiceJourneyCtaButton hasEnquiryFlow={false}>
+                <ServiceJourneyCtaButton hasEnquiryFlow>
                   Begin Your Journey
                 </ServiceJourneyCtaButton>
               </div>

@@ -33,6 +33,7 @@ import PortalSessionDetailPage from "./portal/pages/sessions/SessionDetailPage";
 import PortalSettingsHome from "./portal/pages/settings/SettingsHome";
 import PaymentReturnPage from "./portal/pages/payment/PaymentReturnPage";
 import FullPaymentPage from "./portal/pages/payment/FullPaymentPage";
+import AccountSettingsPage from "./pages/AccountSettingsPage";
 import LogoSnowfall from "./components/Logosnowfall";
 import { getDashboardHome, roleMatches } from "./utils/roles";
 
@@ -169,6 +170,14 @@ const App = () => {
               </RequireAuth>
             }
           />
+          <Route
+            path="settings"
+            element={
+              <RequireAuth role="admin">
+                <AccountSettingsPage />
+              </RequireAuth>
+            }
+          />
         </Route>
 
         <Route path="/counsellor" element={<Navigate to="/counsellor/dashboard" replace />} />
@@ -197,6 +206,14 @@ const App = () => {
               </RequireAuth>
             }
           />
+          <Route
+            path="settings"
+            element={
+              <RequireAuth role="counsellor">
+                <AccountSettingsPage />
+              </RequireAuth>
+            }
+          />
         </Route>
 
         <Route path="/sales" element={<Navigate to="/sales/dashboard/enquiries" replace />} />
@@ -207,6 +224,14 @@ const App = () => {
             element={
               <RequireAuth role="sales">
                 <SalesEnquiriesHome />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="settings"
+            element={
+              <RequireAuth role="sales">
+                <AccountSettingsPage />
               </RequireAuth>
             }
           />
@@ -239,6 +264,14 @@ const App = () => {
             element={
               <RequireAuth role="franchise_admin">
                 <FranchiseAdminCarriersHome />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="settings"
+            element={
+              <RequireAuth role="franchise_admin">
+                <AccountSettingsPage />
               </RequireAuth>
             }
           />
