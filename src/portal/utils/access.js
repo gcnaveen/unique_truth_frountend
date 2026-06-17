@@ -53,22 +53,18 @@ export const buildPortalPaymentContext = (...sources) => {
   return merged;
 };
 
-/** Members may download only after full payment — never advance alone. */
-export const canDownloadPortalMedia = (mediaListResponse, paymentContext) => {
-  if (!isFullPaymentCompleted(paymentContext)) return false;
+/** Trust API flags for converted enquiries — full program payment no longer gates media. */
+export const canDownloadPortalMedia = (mediaListResponse) => {
   const payload = unwrapPortalPayload(mediaListResponse);
-  if (payload?.paymentRequired === true) return false;
   if (payload?.canDownload === false) return false;
+  if (payload?.paymentRequired === true) return false;
   return true;
 };
 
-export const isPortalMediaItemLocked = (item, paymentContext) => {
-  if (item?.locked === true) return true;
-  return !isFullPaymentCompleted(paymentContext);
-};
+export const isPortalMediaItemLocked = (item) => item?.locked === true;
 
 export const getPortalMediaDownloadBlockMessage = () =>
-  "The full program amount must be paid before you can download recordings and reports. Advance payment alone unlocks your dashboard but not downloads — contact your counsellor or sales team to settle the remaining balance.";
+  "Downloads are not available for this file right now. Contact your counsellor if you need help.";
 
 export const getPortalMediaDownloadErrorMessage = (error) => {
   const data = error?.response?.data;

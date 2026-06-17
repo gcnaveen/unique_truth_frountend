@@ -12,6 +12,7 @@ import {
   normalizePagedItems,
 } from "../../utils/format";
 import AssignedUserDrawer from "./components/AssignedUserDrawer";
+import SessionDrawer from "../sessions/components/SessionDrawer";
 
 const AssignedUsersHome = () => {
   const { access_token } = useSelector((state) => state.user.value);
@@ -23,6 +24,8 @@ const AssignedUsersHome = () => {
   const [error, setError] = useState("");
   const [selectedId, setSelectedId] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedSessionId, setSelectedSessionId] = useState("");
+  const [sessionDrawerOpen, setSessionDrawerOpen] = useState(false);
 
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil((totalCount || users.length) / pageLimit)),
@@ -63,6 +66,17 @@ const AssignedUsersHome = () => {
   const closeDrawer = () => {
     setDrawerOpen(false);
     setTimeout(() => setSelectedId(""), 300);
+  };
+
+  const openRescheduleSession = (sessionId) => {
+    closeDrawer();
+    setSelectedSessionId(sessionId);
+    setSessionDrawerOpen(true);
+  };
+
+  const closeSessionDrawer = () => {
+    setSessionDrawerOpen(false);
+    setTimeout(() => setSelectedSessionId(""), 300);
   };
 
   return (
@@ -189,6 +203,14 @@ const AssignedUsersHome = () => {
         accessToken={access_token}
         open={drawerOpen}
         onClose={closeDrawer}
+        onUpdated={loadUsers}
+        onRescheduleSession={openRescheduleSession}
+      />
+      <SessionDrawer
+        sessionId={selectedSessionId}
+        accessToken={access_token}
+        open={sessionDrawerOpen}
+        onClose={closeSessionDrawer}
         onUpdated={loadUsers}
       />
     </>

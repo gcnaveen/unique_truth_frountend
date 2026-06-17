@@ -57,6 +57,23 @@ export const getPortalSessionById = async (token, sessionId) => {
   return response.data;
 };
 
+export const initiatePortalSessionPayment = async (token, sessionId, payload) => {
+  const response = await portalClient.post(
+    `/portal/sessions/${sessionId}/payments/initiate`,
+    payload,
+    authHeaders(token),
+  );
+  return response.data;
+};
+
+export const getPortalSessionPaymentStatus = async (token, sessionId, params = {}) => {
+  const response = await portalClient.get(
+    `/portal/sessions/${sessionId}/payments/status`,
+    { ...authHeaders(token), params },
+  );
+  return response.data;
+};
+
 export const patchPortalPassword = async (token, payload) => {
   const response = await portalClient.patch("/portal/password", payload, authHeaders(token));
   return response.data;
@@ -172,6 +189,73 @@ export const getPortalFingerprint = async (token, enquiryId) => {
 export const deletePortalFingerprint = async (token, enquiryId) => {
   const response = await portalClient.delete(
     `/portal/enquiries/${enquiryId}/fingerprint`,
+    authHeaders(token),
+  );
+  return response.data;
+};
+
+export const getPortalAnnouncements = async (token, params = {}) => {
+  const response = await portalClient.get("/portal/announcements", {
+    ...authHeaders(token),
+    params,
+  });
+  return response.data;
+};
+
+export const getPortalAnnouncementsUnreadCount = async (token) => {
+  const response = await portalClient.get(
+    "/portal/announcements/unread-count",
+    authHeaders(token),
+  );
+  return response.data;
+};
+
+export const getPortalAnnouncementById = async (token, announcementId) => {
+  const response = await portalClient.get(
+    `/portal/announcements/${announcementId}`,
+    authHeaders(token),
+  );
+  return response.data;
+};
+
+export const postPortalAnnouncementReply = async (token, announcementId, payload) => {
+  const response = await portalClient.post(
+    `/portal/announcements/${announcementId}/replies`,
+    payload,
+    authHeaders(token),
+  );
+  return response.data;
+};
+
+export const putPortalAnnouncementReaction = async (token, announcementId, payload) => {
+  const response = await portalClient.put(
+    `/portal/announcements/${announcementId}/reactions`,
+    payload,
+    authHeaders(token),
+  );
+  return response.data;
+};
+
+export const deletePortalAnnouncementReaction = async (token, announcementId) => {
+  const response = await portalClient.delete(
+    `/portal/announcements/${announcementId}/reactions`,
+    authHeaders(token),
+  );
+  return response.data;
+};
+
+export const postPortalAnnouncementArchive = async (token, announcementId) => {
+  const response = await portalClient.post(
+    `/portal/announcements/${announcementId}/archive`,
+    {},
+    authHeaders(token),
+  );
+  return response.data;
+};
+
+export const deletePortalAnnouncementArchive = async (token, announcementId) => {
+  const response = await portalClient.delete(
+    `/portal/announcements/${announcementId}/archive`,
     authHeaders(token),
   );
   return response.data;

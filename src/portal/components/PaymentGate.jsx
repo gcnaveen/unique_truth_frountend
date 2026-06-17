@@ -35,7 +35,9 @@ const normalizeLevels = (response) => {
   }));
 };
 
-export default function PaymentGate({ accessToken, profile, onAccessGranted }) {
+import PortalAnnouncementNotice from "./PortalAnnouncementNotice";
+
+export default function PaymentGate({ accessToken, profile, announcementUnreadCount = 0, onAccessGranted }) {
   const [levels, setLevels] = useState([]);
   const [selectedLevel, setSelectedLevel] = useState("");
   const [amountRupees, setAmountRupees] = useState("");
@@ -169,7 +171,8 @@ export default function PaymentGate({ accessToken, profile, onAccessGranted }) {
   };
 
   return (
-    <div className="mx-auto w-full max-w-3xl">
+    <div className="mx-auto w-full max-w-3xl space-y-4">
+      <PortalAnnouncementNotice unreadCount={announcementUnreadCount} />
       <div className="overflow-hidden rounded-3xl border border-[#c9a86c]/25 bg-linear-to-br from-[#0f2e1a]/95 via-[#133726]/90 to-[#0a1f14]/95 p-6 shadow-2xl shadow-black/30 md:p-10">
         <div className="mb-8 text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#c9a86c]">
@@ -180,7 +183,7 @@ export default function PaymentGate({ accessToken, profile, onAccessGranted }) {
           </h1>
           <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-white/75">
             Advance is fixed at 20% of your total package amount based on counseling level.
-            Recordings and reports unlock after full payment.
+            Recordings and reports are available in your portal after your enquiry is converted.
           </p>
           {paymentStatus === "pending" ? (
             <span className="mt-4 inline-flex items-center gap-2 rounded-full border border-amber-400/40 bg-amber-500/15 px-4 py-1.5 text-xs font-semibold text-amber-100">

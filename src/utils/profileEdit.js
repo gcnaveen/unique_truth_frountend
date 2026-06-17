@@ -28,3 +28,6 @@ export const pickProfileEdit = (source, { isPortalUser = false } = {}) => {
 
 export const usesPortalProfileEndpoint = (profileEdit) =>
   String(profileEdit?.updateProfileEndpoint || "").includes("/portal/");
+
+export const canManageStaffUnavailability = (profileEdit) =>
+  profileEdit?.canManageUnavailability === true;

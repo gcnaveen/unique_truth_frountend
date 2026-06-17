@@ -39,6 +39,18 @@ const UserRoleSelector = ({ role, setRole }) => {
         >
           Counsellor
         </button>
+        <button
+          type="button"
+          onClick={() => setRole("manager")}
+          className={[
+            "rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors",
+            role === "manager"
+              ? "bg-[#a7f3d0]/20 text-[#a7f3d0] border border-[#5eead4]/60"
+              : "bg-white/10 text-white/80 border border-white/25 hover:bg-white/20",
+          ].join(" ")}
+        >
+          Manager
+        </button>
       </div>
     </div>
   );

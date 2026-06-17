@@ -57,6 +57,16 @@ export const buildPortalFingerprintConfirmPayload = (presignPayload, file, optio
   };
 };
 
+export const buildManagerFingerprintConfirmPayload = (presignPayload, file) => {
+  const defaults = presignPayload?.confirmDefaults || {};
+  return {
+    ...buildConfirmPayload(presignPayload, file),
+    attestationDataPrincipalConsentObtained:
+      defaults.attestationDataPrincipalConsentObtained ?? true,
+    consentBiometricProcessing: defaults.consentBiometricProcessing ?? true,
+  };
+};
+
 export const FINGERPRINT_IMAGE_TYPES = new Set([
   "image/jpeg",
   "image/jpg",
@@ -99,4 +109,39 @@ export const normalizeMediaList = (response) => {
 export const pickDownloadUrl = (response) => {
   const payload = unwrapApiPayload(response);
   return payload.downloadUrl || payload.url || payload.signedUrl || payload.signed_url || "";
+};
+
+export const pickMediaItemUrl = (item) =>
+  item?.viewUrl ||
+  item?.downloadUrl ||
+  item?.url ||
+  item?.signedUrl ||
+  item?.signed_url ||
+  "";
+
+export const isPdfMediaItem = (item) => {
+  const type = String(item?.contentType || item?.mimeType || "").toLowerCase();
+  const name = String(
+    item?.fileName || item?.filename || item?.originalName || item?.name || "",
+  ).toLowerCase();
+  return type === "application/pdf" || name.endsWith(".pdf");
+};
+
+export const fetchBlobPreviewUrl = async (url, contentType = "application/pdf") => {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Preview failed (${response.status})`);
+  }
+  const blob = await response.blob();
+  const typedBlob =
+    blob.type && blob.type !== "application/octet-stream"
+      ? blob
+      : new Blob([blob], { type: contentType });
+  return URL.createObjectURL(typedBlob);
+};
+
+export const revokeBlobPreviewUrl = (url) => {
+  if (typeof url === "string" && url.startsWith("blob:")) {
+    URL.revokeObjectURL(url);
+  }
 };

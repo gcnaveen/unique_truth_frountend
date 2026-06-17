@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { motion } from "motion/react";
 import PortalProfileMenu from "./PortalProfileMenu";
+import { PORTAL_ANNOUNCEMENTS_PATH } from "../../utils/announcements";
 
 const navLinkClass = ({ isActive }) =>
   [
@@ -11,9 +12,26 @@ const navLinkClass = ({ isActive }) =>
       : "text-[rgba(255,248,236,0.72)] hover:text-[#c9a86c]",
   ].join(" ");
 
+function NavItemLabel({ item, announcementUnreadCount }) {
+  const showBadge =
+    item.path === PORTAL_ANNOUNCEMENTS_PATH && announcementUnreadCount > 0;
+
+  if (!showBadge) return item.label;
+
+  return (
+    <span className="inline-flex items-center gap-2">
+      {item.label}
+      <span className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-[#5eead4] px-1.5 py-0.5 text-[10px] font-bold leading-none text-[#0f2e1a]">
+        {announcementUnreadCount > 9 ? "9+" : announcementUnreadCount}
+      </span>
+    </span>
+  );
+}
+
 export default function PortalSiteHeader({
   navItems,
   hasAccess,
+  announcementUnreadCount = 0,
   profile,
   displayName,
   email,
@@ -47,14 +65,14 @@ export default function PortalSiteHeader({
             />
           </Link>
 
-          {showNav && hasAccess ? (
+          {showNav && navItems.length > 0 ? (
             <nav
               className="mx-4 hidden flex-1 items-center justify-center gap-6 lg:flex xl:gap-8"
               aria-label="Member portal"
             >
               {navItems.map((item) => (
                 <NavLink key={item.path} to={item.path} end={item.end} className={navLinkClass}>
-                  {item.label}
+                  <NavItemLabel item={item} announcementUnreadCount={announcementUnreadCount} />
                 </NavLink>
               ))}
             </nav>
@@ -73,7 +91,7 @@ export default function PortalSiteHeader({
               />
             ) : null}
 
-            {showNav && hasAccess ? (
+            {showNav && navItems.length > 0 ? (
               <button
                 type="button"
                 className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/14 bg-white/[0.06] backdrop-blur-sm lg:hidden"
@@ -107,7 +125,7 @@ export default function PortalSiteHeader({
         </motion.div>
       </div>
 
-      {menuOpen && showNav && hasAccess ? (
+      {menuOpen && showNav && navItems.length > 0 ? (
         <div className="fixed inset-0 z-40 lg:hidden">
           <button
             type="button"
@@ -132,7 +150,7 @@ export default function PortalSiteHeader({
                     ].join(" ")
                   }
                 >
-                  {item.label}
+                  <NavItemLabel item={item} announcementUnreadCount={announcementUnreadCount} />
                 </NavLink>
               ))}
             </div>

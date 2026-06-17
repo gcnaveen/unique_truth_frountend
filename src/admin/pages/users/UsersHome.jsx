@@ -37,6 +37,7 @@ const uiRoleToApiRole = (value) => {
   if (value === "admin" || value === "franchise_admin") return "franchise_admin";
   if (value === "sales_person") return "sales";
   if (value === "counsellor") return "counsellor";
+  if (value === "manager") return "manager";
   return value || "franchise_admin";
 };
 
@@ -53,6 +54,7 @@ const apiRoleToUiRole = (value) => {
     return "sales_person";
   }
   if (value === "counsellor" || value === "counselor") return "counsellor";
+  if (value === "manager") return "manager";
   if (value === "user" || value === "member") return "user";
   return "sales_person";
 };
@@ -113,6 +115,7 @@ const UsersHome = () => {
       return "Sales Person";
     }
     if (r === "counsellor" || r === "counselor") return "Counsellor";
+    if (r === "manager") return "Manager";
     if (r === "user" || r === "member") return "Member";
     return value ? String(value).replace(/_/g, " ") : "—";
   };
@@ -185,7 +188,10 @@ const UsersHome = () => {
     }
 
     const needsFranchise =
-      apiRole === "franchise_admin" || apiRole === "sales" || apiRole === "counsellor";
+      apiRole === "franchise_admin" ||
+      apiRole === "sales" ||
+      apiRole === "counsellor" ||
+      apiRole === "manager";
 
     if (!editingUserId && needsFranchise && !userForm.franchiseId) {
       setError("Select a franchise for this role.");
@@ -389,6 +395,7 @@ const UsersHome = () => {
               <option value="admin">Franchise Admin</option>
               <option value="sales_person">Sales Person</option>
               <option value="counsellor">Counsellor</option>
+              <option value="manager">Manager</option>
             </select>
           </div>
         ) : null}

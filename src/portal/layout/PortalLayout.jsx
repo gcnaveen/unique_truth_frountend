@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { getPortalMe } from "../../api/portal";
+import { getPortalMe, getPortalAnnouncementsUnreadCount } from "../../api/portal";
 import { logout, updateUser } from "../../reducers/user";
 import PaymentGate from "../components/PaymentGate";
 import PortalFingerprintReminder from "../components/PortalFingerprintReminder";
@@ -13,6 +13,7 @@ import {
   pickPortalAccessFromLogin,
   unwrapPortalPayload,
 } from "../utils/access";
+import { PORTAL_ANNOUNCEMENTS_PATH, pickAnnouncementUnreadCount } from "../../utils/announcements";
 import {
   checkPortalFingerprintStatus,
   loadPortalEnquiryList,
@@ -23,6 +24,7 @@ const navItems = [
   { path: "/portal/dashboard", label: "Home", end: true },
   { path: "/portal/dashboard/enquiries", label: "My journey", end: false },
   { path: "/portal/dashboard/sessions", label: "Sessions", end: false },
+  { path: "/portal/dashboard/announcements", label: "Announcements", end: false },
   { path: "/portal/dashboard/settings", label: "Privacy", end: false },
 ];
 
@@ -38,6 +40,7 @@ export default function PortalLayout() {
   const [loading, setLoading] = useState(true);
   const [fingerprintReminderOpen, setFingerprintReminderOpen] = useState(false);
   const [primaryEnquiryId, setPrimaryEnquiryId] = useState("");
+  const [announcementUnreadCount, setAnnouncementUnreadCount] = useState(0);
 
   const refreshProfile = useCallback(async () => {
     if (!access_token) return null;
@@ -59,6 +62,16 @@ export default function PortalLayout() {
     return data;
   }, [access_token, dispatch]);
 
+  const refreshAnnouncementUnreadCount = useCallback(async () => {
+    if (!access_token) return;
+    try {
+      const response = await getPortalAnnouncementsUnreadCount(access_token);
+      setAnnouncementUnreadCount(pickAnnouncementUnreadCount(response));
+    } catch {
+      setAnnouncementUnreadCount(0);
+    }
+  }, [access_token]);
+
   useEffect(() => {
     if (!access_token) return;
     const load = async () => {
@@ -74,7 +87,20 @@ export default function PortalLayout() {
     load();
   }, [access_token, refreshProfile]);
 
+  useEffect(() => {
+    if (!loading && access_token) {
+      refreshAnnouncementUnreadCount();
+    }
+  }, [loading, access_token, location.pathname, refreshAnnouncementUnreadCount]);
+
   const hasAccess = canAccessPortalDashboard(profile);
+  const onAnnouncementsRoute = location.pathname.startsWith(PORTAL_ANNOUNCEMENTS_PATH);
+  const announcementsNavItem = navItems.find((item) => item.path === PORTAL_ANNOUNCEMENTS_PATH);
+  const visibleNavItems = hasAccess
+    ? navItems
+    : announcementsNavItem
+      ? [announcementsNavItem]
+      : [];
 
   const refreshFingerprintReminder = useCallback(async () => {
     if (!access_token || !hasAccess) {
@@ -123,8 +149,9 @@ export default function PortalLayout() {
   return (
     <div className="font-body min-h-screen bg-[#0F2E15] text-white">
       <PortalSiteHeader
-        navItems={navItems}
-        hasAccess={hasAccess}
+        navItems={visibleNavItems}
+        hasAccess={hasAccess || onAnnouncementsRoute}
+        announcementUnreadCount={announcementUnreadCount}
         showNav={!loading}
         profile={!loading ? profile || { name: displayName, email: email_id } : null}
         displayName={displayName}
@@ -138,11 +165,12 @@ export default function PortalLayout() {
           <div className="mx-auto flex min-h-[50vh] max-w-6xl items-center justify-center px-4 md:px-8">
             <p className="text-sm text-[rgba(255,248,236,0.65)]">Loading your portal…</p>
           </div>
-        ) : !hasAccess ? (
+        ) : !hasAccess && !onAnnouncementsRoute ? (
           <div className="mx-auto max-w-6xl px-4 py-8 md:px-8 md:py-10">
             <PaymentGate
               accessToken={access_token}
               profile={profile}
+              announcementUnreadCount={announcementUnreadCount}
               onAccessGranted={(me) => {
                 setProfile(me);
                 navigate("/portal/dashboard", { replace: true });
@@ -155,7 +183,15 @@ export default function PortalLayout() {
               isPortalHome ? "" : "mx-auto max-w-6xl px-4 py-8 md:px-8 md:py-10"
             }
           >
-            <Outlet context={{ profile, refreshProfile, refreshFingerprintReminder }} />
+            <Outlet
+              context={{
+                profile,
+                refreshProfile,
+                refreshFingerprintReminder,
+                announcementUnreadCount,
+                refreshAnnouncementUnreadCount,
+              }}
+            />
           </div>
         )}
       </main>

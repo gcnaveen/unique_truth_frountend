@@ -77,6 +77,15 @@ export const patchCounsellorSessionStatus = async (token, sessionId, payload) =>
   return response.data;
 };
 
+export const patchCounsellorSession = async (token, sessionId, payload) => {
+  const response = await counsellorClient.patch(
+    `/counsellor/sessions/${sessionId}`,
+    payload,
+    authHeaders(token),
+  );
+  return response.data;
+};
+
 export const presignCounsellorAudio = async (token, enquiryId, payload = {}) => {
   const response = await counsellorClient.post(
     `/counsellor/assigned-users/${enquiryId}/audio/presign`,
@@ -111,6 +120,14 @@ export const getCounsellorAudioDownload = async (token, enquiryId, audioId) => {
   return response.data;
 };
 
+export const deleteCounsellorAudio = async (token, enquiryId, audioId) => {
+  const response = await counsellorClient.delete(
+    `/counsellor/assigned-users/${enquiryId}/audio/${audioId}`,
+    authHeaders(token),
+  );
+  return response.data;
+};
+
 export const presignCounsellorReport = async (token, enquiryId, payload = {}) => {
   const response = await counsellorClient.post(
     `/counsellor/assigned-users/${enquiryId}/reports/presign`,
@@ -140,6 +157,14 @@ export const getCounsellorReportList = async (token, enquiryId) => {
 export const getCounsellorReportDownload = async (token, enquiryId, reportId) => {
   const response = await counsellorClient.get(
     `/counsellor/assigned-users/${enquiryId}/reports/${reportId}/download`,
+    authHeaders(token),
+  );
+  return response.data;
+};
+
+export const deleteCounsellorReport = async (token, enquiryId, reportId) => {
+  const response = await counsellorClient.delete(
+    `/counsellor/assigned-users/${enquiryId}/reports/${reportId}`,
     authHeaders(token),
   );
   return response.data;

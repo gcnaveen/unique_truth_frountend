@@ -34,6 +34,10 @@ import PortalSettingsHome from "./portal/pages/settings/SettingsHome";
 import PaymentReturnPage from "./portal/pages/payment/PaymentReturnPage";
 import FullPaymentPage from "./portal/pages/payment/FullPaymentPage";
 import AccountSettingsPage from "./pages/AccountSettingsPage";
+import StaffAvailabilityPage from "./pages/StaffAvailabilityPage";
+import AnnouncementsInboxPage from "./pages/AnnouncementsInboxPage";
+import AdminAnnouncementsHome from "./admin/pages/announcements/AnnouncementsHome";
+import ManagerUsersHome from "./manager/pages/users/UsersHome";
 import LogoSnowfall from "./components/Logosnowfall";
 import { getDashboardHome, roleMatches } from "./utils/roles";
 
@@ -171,6 +175,14 @@ const App = () => {
             }
           />
           <Route
+            path="announcements"
+            element={
+              <RequireAuth role="admin">
+                <AdminAnnouncementsHome />
+              </RequireAuth>
+            }
+          />
+          <Route
             path="settings"
             element={
               <RequireAuth role="admin">
@@ -207,6 +219,14 @@ const App = () => {
             }
           />
           <Route
+            path="availability"
+            element={
+              <RequireAuth role="counsellor">
+                <StaffAvailabilityPage />
+              </RequireAuth>
+            }
+          />
+          <Route
             path="settings"
             element={
               <RequireAuth role="counsellor">
@@ -228,9 +248,38 @@ const App = () => {
             }
           />
           <Route
+            path="availability"
+            element={
+              <RequireAuth role="sales">
+                <StaffAvailabilityPage />
+              </RequireAuth>
+            }
+          />
+          <Route
             path="settings"
             element={
               <RequireAuth role="sales">
+                <AccountSettingsPage />
+              </RequireAuth>
+            }
+          />
+        </Route>
+
+        <Route path="/manager" element={<Navigate to="/manager/dashboard/users" replace />} />
+        <Route path="/manager/dashboard" element={<DashboardShell />}>
+          <Route index element={<Navigate to="users" replace />} />
+          <Route
+            path="users"
+            element={
+              <RequireAuth role="manager">
+                <ManagerUsersHome />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="settings"
+            element={
+              <RequireAuth role="manager">
                 <AccountSettingsPage />
               </RequireAuth>
             }
@@ -334,6 +383,14 @@ const App = () => {
             element={
               <RequireAuth role="user">
                 <PortalSessionDetailPage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="announcements"
+            element={
+              <RequireAuth role="user">
+                <AnnouncementsInboxPage />
               </RequireAuth>
             }
           />

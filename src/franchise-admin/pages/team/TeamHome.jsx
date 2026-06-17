@@ -36,6 +36,7 @@ const ROLE_FILTER_OPTIONS = [
   { value: "", label: "All roles" },
   { value: "sales", label: "Sales" },
   { value: "counsellor", label: "Counsellor" },
+  { value: "manager", label: "Manager" },
   { value: "operation_team", label: "Operation team" },
   { value: "user", label: "User" },
 ];
@@ -67,6 +68,7 @@ const getRoleLabel = (role) => {
   const map = {
     sales: "Sales",
     counsellor: "Counsellor",
+    manager: "Manager",
     operation_team: "Operation team",
     user: "User",
   };

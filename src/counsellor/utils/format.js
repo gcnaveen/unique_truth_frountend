@@ -98,3 +98,25 @@ export const SESSION_STATUS_OPTIONS = [
   { value: "cancelled", label: "Cancelled" },
   { value: "no_show", label: "No show" },
 ];
+
+export const isActiveSessionStatus = (status) => {
+  const value = String(status || "").toLowerCase();
+  return value === "pending_payment" || value === "scheduled";
+};
+
+export const getSessionStatusTone = (status) => {
+  const value = String(status || "").toLowerCase();
+  if (value === "pending_payment") {
+    return "bg-amber-500/15 text-amber-100 border-amber-400/40";
+  }
+  if (value === "scheduled") {
+    return "bg-emerald-500/15 text-emerald-100 border-emerald-400/40";
+  }
+  if (value === "completed") {
+    return "bg-[#5eead4]/15 text-[#a7f3d0] border-[#5eead4]/40";
+  }
+  if (value === "cancelled" || value === "no_show") {
+    return "bg-white/10 text-white/60 border-white/25";
+  }
+  return "bg-white/15 text-white border-white/30";
+};

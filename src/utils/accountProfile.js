@@ -15,6 +15,7 @@ const ROLE_LABELS = {
   sales_person: "Sales",
   counsellor: "Counsellor",
   counselor: "Counsellor",
+  manager: "Manager",
   operation_team: "Operation Team",
   user: "Member",
 };

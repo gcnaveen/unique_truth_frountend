@@ -1,15 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../../reducers/user";
 import UserAvatar from "../../components/profile/UserAvatar";
 import {
-  getDashboardHome,
   isCounsellor,
   isFranchiseAdmin,
+  isManager,
   isPlatformAdmin,
   isSales,
 } from "../../utils/roles";
+import { canManageStaffUnavailability } from "../../utils/profileEdit";
 
 // ── Icons ──────────────────────────────────────────────────────────────────
 
@@ -153,7 +154,49 @@ const UsersIcon = ({ size = 20 }) => (
   </svg>
 );
 
+const MegaphoneIcon = ({ size = 20 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M3 11v2a2 2 0 0 0 2 2h2l8 4V5L7 9H5a2 2 0 0 0-2 2z" />
+    <path d="M16 8.5a5 5 0 0 1 0 7" />
+    <path d="M18.5 6a8 8 0 0 1 0 12" />
+  </svg>
+);
+
+const CalendarIcon = ({ size = 20 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+    <line x1="16" y1="2" x2="16" y2="6" />
+    <line x1="8" y1="2" x2="8" y2="6" />
+    <line x1="3" y1="10" x2="21" y2="10" />
+  </svg>
+);
+
 // ── Nav config ──────────────────────────────────────────────────────────────
+
+const availabilityNavItem = {
+  pathSuffix: "availability",
+  label: "My availability",
+  icon: CalendarIcon,
+  end: false,
+};
 
 const counsellorNavItems = [
   {
@@ -192,6 +235,21 @@ const salesNavItems = [
   {
     path: "/sales/dashboard/settings",
     label: "Account",
+    icon: SettingsIcon,
+    end: false,
+  },
+];
+
+const managerNavItems = [
+  {
+    path: "/manager/dashboard/users",
+    label: "Portal members",
+    icon: UsersIcon,
+    end: false,
+  },
+  {
+    path: "/manager/dashboard/settings",
+    label: "My profile",
     icon: SettingsIcon,
     end: false,
   },
@@ -256,8 +314,14 @@ const adminNavItems = [
     end: false,
   },
   {
+    path: "/admin/dashboard/announcements",
+    label: "Announcements",
+    icon: MegaphoneIcon,
+    end: false,
+  },
+  {
     path: "/admin/dashboard/settings",
-    label: "Account",
+    label: "My profile",
     icon: SettingsIcon,
     end: false,
   },
@@ -325,32 +389,67 @@ export default function DashboardLayout() {
   const [isMobile, setIsMobile] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { name, role, profilePhotoUrl } = useSelector((state) => state.user.value);
-  const navItems = isFranchiseAdmin(role)
+  const { name, role, profilePhotoUrl, profileEdit } = useSelector((state) => state.user.value);
+  const baseNavItems = isFranchiseAdmin(role)
     ? franchiseAdminNavItems
     : isSales(role)
       ? salesNavItems
       : isCounsellor(role)
         ? counsellorNavItems
-        : adminNavItems;
+        : isManager(role)
+          ? managerNavItems
+          : adminNavItems;
+
+  const navItems = useMemo(() => {
+    if (!canManageStaffUnavailability(profileEdit)) return baseNavItems;
+
+    const prefix = isSales(role)
+      ? "/sales/dashboard"
+      : isCounsellor(role)
+        ? "/counsellor/dashboard"
+        : "";
+
+    if (!prefix) return baseNavItems;
+
+    const availabilityPath = `${prefix}/${availabilityNavItem.pathSuffix}`;
+    if (baseNavItems.some((item) => item.path === availabilityPath)) return baseNavItems;
+
+    const settingsIndex = baseNavItems.findIndex((item) => item.path.endsWith("/settings"));
+    const availabilityItem = {
+      path: availabilityPath,
+      label: availabilityNavItem.label,
+      icon: availabilityNavItem.icon,
+      end: availabilityNavItem.end,
+    };
+
+    if (settingsIndex === -1) return [...baseNavItems, availabilityItem];
+
+    const next = [...baseNavItems];
+    next.splice(settingsIndex, 0, availabilityItem);
+    return next;
+  }, [baseNavItems, profileEdit, role]);
   const dashboardTitle = isFranchiseAdmin(role)
     ? "Franchise Admin"
     : isSales(role)
       ? "Sales"
       : isCounsellor(role)
         ? "Counsellor"
-        : "Admin Dashboard";
+        : isManager(role)
+          ? "Manager"
+          : "Admin Dashboard";
   const roleLabel = isFranchiseAdmin(role)
     ? "FRANCHISE ADMIN"
     : isSales(role)
       ? "SALES"
       : isCounsellor(role)
         ? "COUNSELLOR"
-        : isPlatformAdmin(role)
-          ? "ADMIN"
-          : role
-            ? String(role).toUpperCase()
-            : "USER";
+        : isManager(role)
+          ? "MANAGER"
+          : isPlatformAdmin(role)
+            ? "ADMIN"
+            : role
+              ? String(role).toUpperCase()
+              : "USER";
 
   const handleLogout = () => {
     dispatch(logout());

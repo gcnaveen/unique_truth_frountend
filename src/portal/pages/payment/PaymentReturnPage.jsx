@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { getPortalFullPaymentStatus, getPortalMe } from "../../../api/portal";
+import { getPortalFullPaymentStatus, getPortalMe, getPortalSessionPaymentStatus } from "../../../api/portal";
 import { updateUser } from "../../../reducers/user";
 import {
   canAccessPortalDashboard,
@@ -10,7 +10,7 @@ import {
   pickPortalAccessFromLogin,
   unwrapPortalPayload,
 } from "../../utils/access";
-import { clearPaymentReturn, pickFullPaymentFromStatus, readPaymentReturn } from "../../utils/payment";
+import { clearPaymentReturn, pickFullPaymentFromStatus, pickSessionPaymentFromStatus, readPaymentReturn } from "../../utils/payment";
 
 export default function PaymentReturnPage() {
   const dispatch = useDispatch();
@@ -30,12 +30,15 @@ export default function PaymentReturnPage() {
         const stored = readPaymentReturn();
         const paymentType = searchParams.get("type") || stored.type || "advance";
         const enquiryId = searchParams.get("enquiryId") || stored.enquiryId || "";
+        const sessionId = searchParams.get("sessionId") || stored.sessionId || "";
         const returnTo =
           searchParams.get("returnTo") ||
           stored.returnTo ||
-          (enquiryId
-            ? `/portal/dashboard/enquiries/${enquiryId}`
-            : "/portal/dashboard/enquiries");
+          (sessionId
+            ? `/portal/dashboard/sessions/${sessionId}`
+            : enquiryId
+              ? `/portal/dashboard/enquiries/${enquiryId}`
+              : "/portal/dashboard/enquiries");
 
         const urlHint = searchParams.get("status") || searchParams.get("paymentStatus");
         const merchantOrderId = searchParams.get("merchantOrderId");
@@ -50,6 +53,33 @@ export default function PaymentReturnPage() {
             counselingLevel: access.counselingLevel,
           }),
         );
+
+        if (paymentType === "session" && sessionId) {
+          const statusParams = merchantOrderId ? { merchantOrderId } : {};
+          const sessionStatusRes = await getPortalSessionPaymentStatus(
+            access_token,
+            sessionId,
+            statusParams,
+          );
+          const payment = pickSessionPaymentFromStatus(sessionStatusRes);
+          if (payment?.canConfirmBooking || payment?.status === "completed") {
+            clearPaymentReturn();
+            setStatus("success");
+            setMessage("Payment confirmed. Your counselling slot is now scheduled.");
+            setTimeout(() => navigate(returnTo, { replace: true }), 1500);
+            return;
+          }
+          if (urlHint === "failed" || urlHint === "failure") {
+            setStatus("failed");
+            setMessage("Payment was not completed. You can try again from the session page.");
+          } else {
+            setStatus("pending");
+            setMessage(
+              "We are confirming your session payment. Refresh in a moment or return to the session.",
+            );
+          }
+          return;
+        }
 
         if (paymentType === "full" && enquiryId) {
           const statusParams = merchantOrderId ? { merchantOrderId } : {};
@@ -108,10 +138,15 @@ export default function PaymentReturnPage() {
   const stored = readPaymentReturn();
   const paymentType = searchParams.get("type") || stored.type || "advance";
   const enquiryId = searchParams.get("enquiryId") || stored.enquiryId || "";
+  const sessionId = searchParams.get("sessionId") || stored.sessionId || "";
   const backTo =
     searchParams.get("returnTo") ||
     stored.returnTo ||
-    (enquiryId ? `/portal/dashboard/enquiries/${enquiryId}` : "/portal/dashboard/enquiries");
+    (sessionId
+      ? `/portal/dashboard/sessions/${sessionId}`
+      : enquiryId
+        ? `/portal/dashboard/enquiries/${enquiryId}`
+        : "/portal/dashboard/enquiries");
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#0a1f14] px-4 text-white">
@@ -129,10 +164,14 @@ export default function PaymentReturnPage() {
         <p className="mt-3 text-sm text-white/75">{message}</p>
         {status !== "checking" && status !== "success" ? (
           <Link
-            to={paymentType === "full" ? backTo : "/portal/dashboard"}
+            to={paymentType === "advance" ? "/portal/dashboard" : backTo}
             className="mt-6 inline-flex rounded-xl bg-linear-to-r from-[#c9a86c] to-[#5eead4] px-5 py-2.5 text-sm font-bold text-[#0f2e1a]"
           >
-            {paymentType === "full" ? "Back to enquiry" : "Back to portal"}
+            {paymentType === "session"
+              ? "Back to session"
+              : paymentType === "full"
+                ? "Back to enquiry"
+                : "Back to portal"}
           </Link>
         ) : null}
       </div>

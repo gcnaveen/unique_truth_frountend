@@ -18,7 +18,7 @@ export default function PortalSessionsHome() {
       try {
         setLoading(true);
         setError("");
-        const response = await getPortalSessions(access_token, { limit: 100, skip: 0 });
+        const response = await getPortalSessions(access_token, { limit: 100, skip: 0, when: "upcoming" });
         const { items } = normalizePagedItems(response);
         setSessions(items);
       } catch (fetchError) {

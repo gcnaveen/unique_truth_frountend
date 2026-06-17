@@ -6,9 +6,11 @@ import { getPortalDashboard } from "../../../api/portal";
 import { unwrapPortalPayload } from "../../utils/access";
 import PortalDashboardHero from "../../components/PortalDashboardHero";
 import PortalAmbient from "../../components/PortalAmbient";
+import PortalAnnouncementNotice from "../../components/PortalAnnouncementNotice";
 import {
   formatDateTime,
   formatLabel,
+  formatRupees,
   getCounselingLevelLabel,
 } from "../../utils/format";
 
@@ -32,6 +34,7 @@ const TILE_ICONS = {
   journey: "✦",
   sessions: "◷",
   privacy: "◇",
+  announcements: "📣",
 };
 
 function StatCard({ label, value, loading, accent, index }) {
@@ -63,7 +66,7 @@ function StatCard({ label, value, loading, accent, index }) {
 
 export default function PortalDashboardHome() {
   const { access_token } = useSelector((state) => state.user.value);
-  const { profile } = useOutletContext() ?? {};
+  const { profile, announcementUnreadCount = 0 } = useOutletContext() ?? {};
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -129,6 +132,13 @@ export default function PortalDashboardHome() {
       desc: "Open your schedule calendar and session details",
     },
     {
+      key: "announcements",
+      to: "/portal/dashboard/announcements",
+      title: "Announcements",
+      desc: "Messages from admin — reply and react in the thread",
+      badge: announcementUnreadCount > 0 ? announcementUnreadCount : null,
+    },
+    {
       key: "privacy",
       to: "/portal/dashboard/settings",
       title: "Privacy",
@@ -161,6 +171,10 @@ export default function PortalDashboardHome() {
             </motion.div>
           ) : null}
 
+          <motion.div variants={fadeUp}>
+            <PortalAnnouncementNotice unreadCount={announcementUnreadCount} />
+          </motion.div>
+
           {nextSession ? (
             <motion.div
               variants={fadeUp}
@@ -186,6 +200,14 @@ export default function PortalDashboardHome() {
                 <p className="mt-1 text-sm text-white/70">
                   {formatDateTime(nextSession.scheduledAt)}
                 </p>
+                {String(nextSession?.status || "").toLowerCase() === "pending_payment" ||
+                nextSession?.paymentRequired ? (
+                  <p className="mt-2 text-sm font-semibold text-amber-100">
+                    {nextSession.amountRupees != null
+                      ? `${formatRupees(nextSession.amountRupees)} due to confirm this slot`
+                      : "Payment required to confirm this slot"}
+                  </p>
+                ) : null}
                 {nextSessionDays !== null ? (
                   <motion.p
                     className="mt-3 inline-flex rounded-full border border-[#5eead4]/40 bg-[#5eead4]/15 px-3 py-1 text-sm font-medium text-[#a7f3d0]"
@@ -202,7 +224,10 @@ export default function PortalDashboardHome() {
                     to={`/portal/dashboard/sessions/${nextSession._id || nextSession.id}`}
                     className="inline-flex rounded-full bg-linear-to-r from-[#c9a86c] to-[#5eead4] px-5 py-2 text-sm font-semibold text-[#0f2e1a] transition hover:opacity-90"
                   >
-                    View details
+                    {String(nextSession?.status || "").toLowerCase() === "pending_payment" ||
+                    nextSession?.paymentRequired
+                      ? "Pay now"
+                      : "View details"}
                   </Link>
                   <Link
                     to="/portal/dashboard/sessions"
@@ -282,25 +307,41 @@ export default function PortalDashboardHome() {
               <p className="mt-3 text-sm text-white/60">No upcoming sessions scheduled yet.</p>
             ) : (
               <ul className="mt-4 space-y-2">
-                {upcoming.slice(0, 5).map((session, index) => (
+                {upcoming.slice(0, 5).map((session, index) => {
+                  const sessionId = session._id || session.id;
+                  const pending =
+                    String(session?.status || "").toLowerCase() === "pending_payment" ||
+                    session?.paymentRequired;
+                  return (
                   <motion.li
-                    key={session._id || session.id}
+                    key={sessionId}
                     initial={{ opacity: 0, x: -16 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.08 * index, duration: 0.4 }}
                     whileHover={{ x: 4 }}
                   >
                     <Link
-                      to={`/portal/dashboard/sessions/${session._id || session.id}`}
-                      className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm transition hover:border-[#5eead4]/30 hover:bg-white/10"
+                      to={`/portal/dashboard/sessions/${sessionId}`}
+                      className={[
+                        "flex flex-wrap items-center justify-between gap-2 rounded-xl border px-4 py-3 text-sm transition hover:bg-white/10",
+                        pending
+                          ? "border-amber-400/35 bg-amber-500/10 hover:border-amber-400/50"
+                          : "border-white/10 bg-white/5 hover:border-[#5eead4]/30",
+                      ].join(" ")}
                     >
                       <span className="font-medium text-white">
                         {formatLabel(session.sessionType)}
+                        {pending ? (
+                          <span className="ml-2 text-xs font-semibold text-amber-100">
+                            · Pay now
+                          </span>
+                        ) : null}
                       </span>
                       <span className="text-white/70">{formatDateTime(session.scheduledAt)}</span>
                     </Link>
                   </motion.li>
-                ))}
+                  );
+                })}
               </ul>
             )}
             <Link
@@ -313,7 +354,7 @@ export default function PortalDashboardHome() {
 
           <motion.div variants={fadeUp}>
             <h2 className="mb-4 text-lg font-semibold text-white">Quick access</h2>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {quickTiles.map((tile, index) => (
                 <motion.div
                   key={tile.key}
@@ -335,6 +376,11 @@ export default function PortalDashboardHome() {
                       {TILE_ICONS[tile.key]}
                     </motion.span>
                     <p className="font-semibold text-white">{tile.title}</p>
+                    {tile.badge ? (
+                      <span className="mt-2 inline-flex rounded-full border border-[#5eead4]/40 bg-[#5eead4]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#a7f3d0]">
+                        {tile.badge} unread
+                      </span>
+                    ) : null}
                     <p className="mt-2 text-sm leading-relaxed text-white/55">{tile.desc}</p>
                     <span className="mt-5 inline-block text-xs font-bold uppercase tracking-wider text-[#5eead4]">
                       Open →

@@ -9,7 +9,23 @@ import {
   parseDateKey,
   toDateKey,
 } from "../../../utils/sessionCalendar";
-import { formatDateTime, formatLabel, getId } from "../../../utils/format";
+import { formatDateTime, formatLabel, formatRupees, getId } from "../../../utils/format";
+
+const isPendingPayment = (session) => {
+  const status = String(session?.status || "").toLowerCase();
+  return status === "pending_payment" || session?.paymentRequired === true;
+};
+
+const sessionStatusClass = (session) => {
+  const status = String(session?.status || "").toLowerCase();
+  if (status === "pending_payment") {
+    return "border-amber-400/40 bg-amber-500/15 text-amber-100";
+  }
+  if (status === "scheduled") {
+    return "border-emerald-400/40 bg-emerald-500/15 text-emerald-100";
+  }
+  return "border-[#5eead4]/40 bg-[#5eead4]/15 text-[#a7f3d0]";
+};
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -200,9 +216,16 @@ export default function SessionsCalendar({ sessions, loading }) {
               ) : (
                 selectedSessions.map((session) => {
                   const id = getId(session);
+                  const pending = isPendingPayment(session);
                   return (
                     <li key={id}>
-                      <Link to={`/portal/dashboard/sessions/${id}`} className={rowClass}>
+                      <Link
+                        to={`/portal/dashboard/sessions/${id}`}
+                        className={[
+                          rowClass,
+                          pending ? "border-amber-400/35 bg-amber-500/10" : "",
+                        ].join(" ")}
+                      >
                         <div>
                           <p className="font-semibold text-white">
                             {formatLabel(session.sessionType)}
@@ -210,10 +233,27 @@ export default function SessionsCalendar({ sessions, loading }) {
                           <p className="text-sm text-white/65">
                             {formatDateTime(session.scheduledAt)}
                           </p>
+                          {pending && session.amountRupees != null ? (
+                            <p className="mt-1 text-xs font-semibold text-amber-100">
+                              {formatRupees(session.amountRupees)} · payment required
+                            </p>
+                          ) : null}
                         </div>
-                        <span className="rounded-full border border-[#5eead4]/40 bg-[#5eead4]/15 px-3 py-1 text-xs font-semibold text-[#a7f3d0]">
-                          {formatLabel(session.status)}
-                        </span>
+                        <div className="flex flex-col items-end gap-2">
+                          <span
+                            className={[
+                              "rounded-full border px-3 py-1 text-xs font-semibold",
+                              sessionStatusClass(session),
+                            ].join(" ")}
+                          >
+                            {formatLabel(session.status)}
+                          </span>
+                          {pending ? (
+                            <span className="rounded-full bg-linear-to-r from-[#c9a86c] to-[#5eead4] px-3 py-1 text-xs font-bold text-[#0f2e1a]">
+                              Pay now
+                            </span>
+                          ) : null}
+                        </div>
                       </Link>
                     </li>
                   );

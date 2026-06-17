@@ -9,6 +9,7 @@ import {
   formatLabel,
   getId,
 } from "../../../utils/format";
+import { isCounsellorUnavailableConflict, pickUnavailabilityErrorMessage } from "../../../../utils/unavailability";
 import AssignedUserMediaPanel from "./AssignedUserMediaPanel";
 
 const initialBookForm = {
@@ -16,6 +17,8 @@ const initialBookForm = {
   date: "",
   time: "",
   durationMinutes: "60",
+  amountRupees: "",
+  counsellorRemarks: "",
   notifyUser: true,
 };
 
@@ -25,6 +28,7 @@ export default function AssignedUserDrawer({
   open,
   onClose,
   onUpdated,
+  onRescheduleSession,
 }) {
   const [detail, setDetail] = useState(null);
   const [bookForm, setBookForm] = useState(initialBookForm);
@@ -32,6 +36,7 @@ export default function AssignedUserDrawer({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [activeSessionId, setActiveSessionId] = useState("");
 
   const loadDetail = async () => {
     const response = await getCounsellorAssignedUserDetail(accessToken, enquiryId);
@@ -44,6 +49,7 @@ export default function AssignedUserDrawer({
     if (!open || !enquiryId || !accessToken) {
       setDetail(null);
       setBookForm(initialBookForm);
+      setActiveSessionId("");
       return;
     }
     const load = async () => {
@@ -79,28 +85,45 @@ export default function AssignedUserDrawer({
       setError("Date and time are required to book a session.");
       return;
     }
+    const amount = Number(bookForm.amountRupees);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setError("Enter a valid session fee in INR.");
+      return;
+    }
     try {
       setSubmitting(true);
       setError("");
       setSuccess("");
+      setActiveSessionId("");
       const payload = {
         enquiryId: resolvedEnquiryId,
         sessionType: bookForm.sessionType,
         date: bookForm.date,
         time: bookForm.time,
+        amountRupees: amount,
         notifyUser: Boolean(bookForm.notifyUser),
       };
       const duration = Number(bookForm.durationMinutes);
       if (Number.isFinite(duration) && duration >= 15) {
         payload.durationMinutes = duration;
       }
+      if (bookForm.counsellorRemarks.trim()) {
+        payload.counsellorRemarks = bookForm.counsellorRemarks.trim();
+      }
       const response = await createCounsellorSession(accessToken, payload);
-      setSuccess(response?.message || "Session booked. User will be notified.");
+      setSuccess(response?.message || "Session booked. User will be notified to pay.");
       setBookForm(initialBookForm);
       await loadDetail();
       onUpdated?.();
     } catch (submitError) {
-      setError(submitError?.response?.data?.message || "Failed to book session.");
+      const data = submitError?.response?.data;
+      if (submitError?.response?.status === 409 && data?.activeSessionId) {
+        setActiveSessionId(data.activeSessionId);
+      }
+      const message = isCounsellorUnavailableConflict(submitError)
+        ? pickUnavailabilityErrorMessage(submitError)
+        : data?.message || "Failed to book session.";
+      setError(message);
     } finally {
       setSubmitting(false);
     }
@@ -165,7 +188,9 @@ export default function AssignedUserDrawer({
               className="mt-6 rounded-xl border border-white/20 bg-white/10 p-4"
             >
               <h3 className="text-base font-semibold text-white">Book session</h3>
-              <p className="mt-1 text-xs text-white/70">Set date, time, and session type.</p>
+              <p className="mt-1 text-xs text-white/70">
+                Set date, time, session fee, and optional remarks. The member pays to confirm.
+              </p>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 <select
                   name="sessionType"
@@ -204,7 +229,27 @@ export default function AssignedUserDrawer({
                   required
                   className="rounded-lg border border-white/25 bg-white/15 px-3 py-2.5 text-sm text-white"
                 />
+                <input
+                  type="number"
+                  name="amountRupees"
+                  min={1}
+                  step={100}
+                  value={bookForm.amountRupees}
+                  onChange={handleBookChange}
+                  required
+                  placeholder="Session fee (INR)"
+                  className="rounded-lg border border-white/25 bg-white/15 px-3 py-2.5 text-sm text-white sm:col-span-2"
+                />
               </div>
+              <textarea
+                name="counsellorRemarks"
+                value={bookForm.counsellorRemarks}
+                onChange={handleBookChange}
+                rows={3}
+                maxLength={2000}
+                placeholder="Remarks for the member (visible after they pay)"
+                className="mt-3 w-full rounded-xl border border-white/25 bg-white/10 px-3 py-2.5 text-sm text-white outline-none focus:border-[#5eead4]"
+              />
               <label className="mt-3 flex items-center gap-2 text-sm text-white/90">
                 <input
                   type="checkbox"
@@ -212,8 +257,20 @@ export default function AssignedUserDrawer({
                   checked={bookForm.notifyUser}
                   onChange={handleBookChange}
                 />
-                Notify user when slot is confirmed
+                Notify user about this booking
               </label>
+              {activeSessionId ? (
+                <div className="mt-3 rounded-xl border border-amber-400/35 bg-amber-500/10 px-3 py-3 text-sm text-amber-100">
+                  <p>This member already has an active booking.</p>
+                  <button
+                    type="button"
+                    onClick={() => onRescheduleSession?.(activeSessionId)}
+                    className="mt-2 rounded-lg border border-amber-300/40 bg-amber-500/15 px-3 py-1.5 text-xs font-semibold text-amber-50"
+                  >
+                    Reschedule existing booking
+                  </button>
+                </div>
+              ) : null}
               <button
                 type="submit"
                 disabled={submitting}

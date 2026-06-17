@@ -25,6 +25,8 @@ export const isSales = (role) => normalizeAuthRole(role) === "sales";
 
 export const isCounsellor = (role) => normalizeAuthRole(role) === "counsellor";
 
+export const isManager = (role) => normalizeAuthRole(role) === "manager";
+
 export const isPortalUser = (role) => normalizeAuthRole(role) === "user";
 
 export const getDashboardHome = (role) => {
@@ -32,6 +34,7 @@ export const getDashboardHome = (role) => {
   if (isFranchiseAdmin(role)) return "/franchise-admin/dashboard/team";
   if (isSales(role)) return "/sales/dashboard/enquiries";
   if (isCounsellor(role)) return "/counsellor/dashboard";
+  if (isManager(role)) return "/manager/dashboard/users";
   if (isPortalUser(role)) return "/portal/dashboard";
   return "/portal/dashboard";
 };

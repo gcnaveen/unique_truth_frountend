@@ -7,6 +7,7 @@ import {
   getId,
   getSessionScheduledDisplay,
   getSessionStatusDisplay,
+  getSessionStatusTone,
   getSessionTypeDisplay,
   hasBookedSession,
   normalizePagedItems,
@@ -87,6 +88,12 @@ const SessionsHome = () => {
   const closeBookDrawer = () => {
     setBookDrawerOpen(false);
     setTimeout(() => setSelectedEnquiryId(""), 300);
+  };
+
+  const openRescheduleSession = (sessionId) => {
+    closeBookDrawer();
+    setSelectedSessionId(sessionId);
+    setSessionDrawerOpen(true);
   };
 
   return (
@@ -178,8 +185,15 @@ const SessionsHome = () => {
                     <td className="border-r border-white/10 px-3 py-4 text-center text-sm text-white/90">
                       {getSessionScheduledDisplay(row)}
                     </td>
-                    <td className="border-r border-white/10 px-3 py-4 text-center text-sm text-[#a7f3d0]">
-                      {getSessionStatusDisplay(row)}
+                    <td className="border-r border-white/10 px-3 py-4 text-center text-sm">
+                      <span
+                        className={[
+                          "inline-flex rounded-full border px-2.5 py-0.5 text-xs font-semibold",
+                          getSessionStatusTone(row?.status),
+                        ].join(" ")}
+                      >
+                        {getSessionStatusDisplay(row)}
+                      </span>
                     </td>
                     <td className="px-3 py-4 text-center">
                       <button
@@ -235,6 +249,7 @@ const SessionsHome = () => {
         open={bookDrawerOpen}
         onClose={closeBookDrawer}
         onUpdated={loadSessions}
+        onRescheduleSession={openRescheduleSession}
       />
     </>
   );
