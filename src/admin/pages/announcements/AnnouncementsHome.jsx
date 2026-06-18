@@ -4,6 +4,7 @@ import {
   deleteAdminAnnouncement,
   getAdminAnnouncements,
 } from "../../../api/announcements";
+import AppLoader from "../../../components/AppLoader";
 import {
   getAnnouncementId,
   normalizeAnnouncementList,
@@ -102,7 +103,7 @@ export default function AdminAnnouncementsHome() {
       <section className={`${panelClass} p-5`}>
         <h2 className="text-lg font-semibold text-white">Sent broadcasts</h2>
         {loading ? (
-          <p className="mt-4 text-sm text-white/60">Loading…</p>
+          <AppLoader label="Loading announcements…" minHeight="min-h-[28vh]" compact />
         ) : items.length === 0 ? (
           <p className="mt-4 text-sm text-white/60">No announcements sent yet.</p>
         ) : (

@@ -5,6 +5,7 @@ import { getPortalMe, getPortalAnnouncementsUnreadCount } from "../../api/portal
 import { logout, updateUser } from "../../reducers/user";
 import PaymentGate from "../components/PaymentGate";
 import PortalFingerprintReminder from "../components/PortalFingerprintReminder";
+import PortalLoader from "../components/PortalLoader";
 import PortalSiteHeader from "../components/PortalSiteHeader";
 import { pickUserProfilePhotoUrl } from "../../utils/profilePhoto";
 import { pickProfileEdit } from "../../utils/profileEdit";
@@ -196,9 +197,7 @@ export default function PortalLayout() {
 
       <main className="relative z-10">
         {loading ? (
-          <div className="mx-auto flex min-h-[50vh] max-w-6xl items-center justify-center px-4 md:px-8">
-            <p className="text-sm text-[rgba(255,248,236,0.65)]">Loading your portal…</p>
-          </div>
+          <PortalLoader label="Loading your portal…" />
         ) : showConnectionError && !onAnnouncementsRoute ? (
           <div className="mx-auto flex min-h-[50vh] max-w-lg items-center justify-center px-4 py-8 md:px-8">
             <div className="w-full rounded-3xl border border-amber-400/30 bg-amber-500/10 p-6 text-center shadow-2xl">

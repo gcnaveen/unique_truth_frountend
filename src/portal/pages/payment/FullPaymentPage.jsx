@@ -22,6 +22,7 @@ import {
   withPortalPaymentRedirect,
 } from "../../utils/payment";
 import { getPricingBreakdown } from "../../utils/pricing";
+import PortalLoader from "../../components/PortalLoader";
 
 export default function FullPaymentPage() {
   const dispatch = useDispatch();
@@ -191,7 +192,7 @@ export default function FullPaymentPage() {
   };
 
   if (loading) {
-    return <p className="text-sm text-white/70">Loading payment details…</p>;
+    return <PortalLoader label="Loading payment details…" minHeight="min-h-[40vh]" />;
   }
 
   return (

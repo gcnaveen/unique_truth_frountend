@@ -13,6 +13,7 @@ import {
   stashPaymentReturn,
   withPortalPaymentRedirect,
 } from "../../utils/payment";
+import PortalLoader from "../../components/PortalLoader";
 import { formatDateTime, formatLabel, formatRupees } from "../../utils/format";
 
 export default function PortalSessionDetailPage() {
@@ -97,7 +98,9 @@ export default function PortalSessionDetailPage() {
     }
   };
 
-  if (loading) return <p className="text-sm text-white/70">Loading session…</p>;
+  if (loading) {
+    return <PortalLoader label="Loading session…" minHeight="min-h-[40vh]" />;
+  }
 
   if (!session) {
     return (

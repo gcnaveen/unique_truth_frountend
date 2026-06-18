@@ -20,6 +20,7 @@ import {
   parsePortalMediaList,
 } from "../../utils/media";
 import PortalFingerprintPanel from "../../components/PortalFingerprintPanel";
+import PortalLoader from "../../components/PortalLoader";
 import {
   FINGERPRINT_SECTION_ID,
   isFingerprintFocus,
@@ -183,7 +184,7 @@ export default function PortalEnquiryDetailPage() {
   };
 
   if (loading) {
-    return <p className="text-sm text-white/70">Loading enquiry…</p>;
+    return <PortalLoader label="Loading enquiry…" minHeight="min-h-[40vh]" />;
   }
 
   if (!enquiry) {

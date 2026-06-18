@@ -19,6 +19,7 @@ import {
   isManagerUploadedFingerprint,
   pickFingerprintFromResponse,
 } from "../utils/fingerprint";
+import PortalLoader from "./PortalLoader";
 
 const panelClass = "rounded-2xl border border-white/15 bg-white/8 p-5";
 const buttonClass =
@@ -321,7 +322,9 @@ export default function PortalFingerprintPanel({
         ) : null}
 
         {loading ? (
-          <p className="mt-4 text-sm text-white/70">Loading fingerprint…</p>
+          <div className="mt-4">
+            <PortalLoader label="Loading fingerprint…" minHeight="min-h-[14vh]" compact />
+          </div>
         ) : hasUploaded ? (
           <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-white/60">

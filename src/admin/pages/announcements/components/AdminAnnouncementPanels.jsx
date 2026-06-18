@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import UserAvatar from "../../../../components/profile/UserAvatar";
+import AppLoader from "../../../../components/AppLoader";
 import AnnouncementAttachmentUploader from "../../../../components/announcements/AnnouncementAttachmentUploader";
 import {
   AnnouncementAttachmentBadge,
@@ -259,7 +260,7 @@ export function AdminAnnouncementDetailDrawer({
         ) : null}
 
         {loading ? (
-          <p className="text-sm text-white/60">Loading…</p>
+          <AppLoader label="Loading announcement…" minHeight="min-h-[32vh]" compact />
         ) : detail ? (
           <div className="space-y-5">
             <div>

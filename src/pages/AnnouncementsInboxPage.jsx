@@ -25,6 +25,7 @@ import {
   pickAnnouncement,
   pickAnnouncementThread,
 } from "../utils/announcements";
+import PortalLoader from "../portal/components/PortalLoader";
 
 const panelClass = "rounded-2xl border border-white/15 bg-white/[0.07]";
 const inputClass =
@@ -286,7 +287,7 @@ export default function AnnouncementsInboxPage() {
             {view === "archived" ? "Archived messages" : "Inbox"}
           </h2>
           {loading ? (
-            <p className="mt-4 text-sm text-white/60">Loading…</p>
+            <PortalLoader label="Loading announcements…" minHeight="min-h-[24vh]" compact />
           ) : items.length === 0 ? (
             <p className="mt-4 text-sm text-white/60">
               {view === "archived" ? "No archived announcements." : "No announcements yet."}
@@ -313,7 +314,7 @@ export default function AnnouncementsInboxPage() {
           {!selectedId ? (
             <p className="text-sm text-white/60">Select an announcement to open the thread.</p>
           ) : detailLoading && !detail ? (
-            <p className="text-sm text-white/60">Loading thread…</p>
+            <PortalLoader label="Loading thread…" minHeight="min-h-[28vh]" compact />
           ) : detail ? (
             <div className="space-y-5">
               <div className="rounded-xl border border-white/10 bg-white/5 p-4">

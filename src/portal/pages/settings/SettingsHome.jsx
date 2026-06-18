@@ -10,6 +10,7 @@ import {
 } from "../../../api/portal";
 import ProfilePhotoEditor from "../../../components/profile/ProfilePhotoEditor";
 import PortalFingerprintPanel from "../../components/PortalFingerprintPanel";
+import PortalLoader from "../../components/PortalLoader";
 import { passwordChanged, updateUser } from "../../../reducers/user";
 import { MIN_PASSWORD_LENGTH } from "../../../utils/authConstants";
 import { pickPortalAccessFromLogin } from "../../utils/access";
@@ -193,7 +194,7 @@ export default function PortalSettingsHome() {
   };
 
   if (loading) {
-    return <p className="text-sm text-white/70">Loading settings…</p>;
+    return <PortalLoader label="Loading your profile…" minHeight="min-h-[40vh]" />;
   }
 
   return (

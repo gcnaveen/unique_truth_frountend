@@ -5,6 +5,7 @@ import { useSelector } from "react-redux";
 import { getPortalDashboard } from "../../../api/portal";
 import { unwrapPortalPayload } from "../../utils/access";
 import PortalDashboardHero from "../../components/PortalDashboardHero";
+import PortalLoader from "../../components/PortalLoader";
 import PortalAmbient from "../../components/PortalAmbient";
 import PortalAnnouncementNotice from "../../components/PortalAnnouncementNotice";
 import {
@@ -145,6 +146,10 @@ export default function PortalDashboardHome() {
       desc: "Profile photo, password, and account settings",
     },
   ];
+
+  if (loading) {
+    return <PortalLoader label="Loading your dashboard…" minHeight="min-h-[50vh]" />;
+  }
 
   return (
     <div>

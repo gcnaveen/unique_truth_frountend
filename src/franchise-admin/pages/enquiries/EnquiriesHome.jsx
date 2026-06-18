@@ -70,10 +70,14 @@ const AssigneeCell = ({ row, nestedField, accentClass }) => {
   const nested = row?.[nestedField];
   const label = getAssigneeLabel(row, nestedField);
   if (!nested || label === "—") {
-    return <span className="text-xs text-white/50">Unassigned</span>;
+    return (
+      <div className="flex min-h-[4.5rem] items-center justify-center">
+        <span className="text-xs text-white/50">Unassigned</span>
+      </div>
+    );
   }
   return (
-    <div className="flex flex-col items-center gap-1.5">
+    <div className="flex min-h-[4.5rem] flex-col items-center justify-center gap-1.5">
       <UserAvatar
         name={label}
         photoUrl={pickUserProfilePhotoUrl(nested)}
@@ -81,15 +85,21 @@ const AssigneeCell = ({ row, nestedField, accentClass }) => {
       />
       <span
         className={[
-          "inline-flex max-w-full truncate rounded-md border px-2 py-0.5 text-[10px] font-semibold",
+          "inline-flex max-w-[7.5rem] truncate rounded-md border px-2 py-0.5 text-[10px] font-semibold",
           accentClass,
         ].join(" ")}
+        title={label}
       >
         {label}
       </span>
     </div>
   );
 };
+
+const thClass =
+  "border-r border-white/15 px-4 py-3.5 text-xs font-semibold uppercase tracking-wide text-white last:border-r-0";
+const tdClass =
+  "border-r border-white/10 px-4 py-3 align-middle text-sm text-white/90 last:border-r-0";
 
 const EnquiriesHome = () => {
   const { access_token } = useSelector((state) => state.user.value);
@@ -259,7 +269,7 @@ const EnquiriesHome = () => {
   };
 
   const rowActionButtonClass =
-    "inline-flex h-8 min-w-18 items-center justify-center rounded-lg border px-3 text-xs font-semibold transition-colors";
+    "inline-flex h-9 w-full items-center justify-center rounded-lg border px-3 text-xs font-semibold transition-colors";
 
   return (
     <section className="mx-auto w-full max-w-[min(100%,96rem)] rounded-2xl border border-white/20 bg-white/10 p-6 shadow-xl backdrop-blur-xl md:p-8">
@@ -325,33 +335,17 @@ const EnquiriesHome = () => {
       ) : null}
 
       <div className="overflow-x-auto rounded-xl border border-white/20 bg-white/5">
-        <table className="min-w-[1020px] w-full table-fixed border-collapse divide-y divide-white/15">
+        <table className="w-full min-w-[1180px] table-fixed border-collapse">
           <thead className="bg-white/20">
             <tr>
-              <th className="w-[4%] border-r border-white/15 px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
-                #
-              </th>
-              <th className="w-[12%] border-r border-white/15 px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
-                Name
-              </th>
-              <th className="w-[14%] border-r border-white/15 px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
-                Contact
-              </th>
-              <th className="w-[12%] border-r border-white/15 px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
-                Service
-              </th>
-              <th className="w-[12%] border-r border-white/15 px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
-                Branch
-              </th>
-              <th className="w-[12%] border-r border-white/15 px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
-                Sales
-              </th>
-              <th className="w-[12%] border-r border-white/15 px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
-                Counsellor
-              </th>
-              <th className="w-[22%] px-3 py-3.5 text-center text-xs font-semibold uppercase text-white">
-                Assignment
-              </th>
+              <th className={`${thClass} w-[4%] text-center`}>#</th>
+              <th className={`${thClass} w-[11%] text-left`}>Name</th>
+              <th className={`${thClass} w-[15%] text-left`}>Contact</th>
+              <th className={`${thClass} w-[12%] text-left`}>Service</th>
+              <th className={`${thClass} w-[12%] text-left`}>Branch</th>
+              <th className={`${thClass} w-[13%] text-center`}>Sales</th>
+              <th className={`${thClass} w-[13%] text-center`}>Counsellor</th>
+              <th className={`${thClass} w-[20%] text-center`}>Assignment</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/10">
@@ -381,23 +375,30 @@ const EnquiriesHome = () => {
                     key={enquiryId || `e-${index}`}
                     className={index % 2 === 0 ? "bg-white/[0.04]" : "bg-white/[0.08]"}
                   >
-                    <td className="border-r border-white/10 px-3 py-4 text-center text-sm text-white">
+                    <td className={`${tdClass} text-center text-white`}>
                       {(currentPage - 1) * pageLimit + index + 1}
                     </td>
-                    <td className="border-r border-white/10 px-3 py-4 text-center text-sm text-white">
-                      {row?.name || "—"}
+                    <td className={`${tdClass} text-left font-medium text-white`}>
+                      <span className="line-clamp-2 break-words">{row?.name || "—"}</span>
                     </td>
-                    <td className="border-r border-white/10 px-3 py-4 text-center text-sm text-white/90">
-                      <div>{row?.email || "—"}</div>
-                      <div className="text-xs text-white/70">{row?.phoneNumber || ""}</div>
+                    <td className={`${tdClass} text-left`}>
+                      <div className="break-all">{row?.email || "—"}</div>
+                      {row?.phoneNumber ? (
+                        <div className="mt-0.5 text-xs text-white/70">{row.phoneNumber}</div>
+                      ) : null}
                     </td>
-                    <td className="border-r border-white/10 px-3 py-4 text-center text-sm text-white/90">
-                      {formatService(row?.service)}
+                    <td className={`${tdClass} text-left`}>
+                      <span className="line-clamp-2 break-words">{formatService(row?.service)}</span>
                     </td>
-                    <td className="border-r border-white/10 px-3 py-4 text-center text-sm text-white/90">
-                      {row?.preferredBranchName || row?.preferredFranchiseId || "—"}
+                    <td className={`${tdClass} text-left`}>
+                      <span
+                        className="line-clamp-2 break-words"
+                        title={row?.preferredBranchName || row?.preferredFranchiseId || ""}
+                      >
+                        {row?.preferredBranchName || row?.preferredFranchiseId || "—"}
+                      </span>
                     </td>
-                    <td className="border-r border-white/10 px-3 py-4 text-center text-sm text-white/90">
+                    <td className={`${tdClass} text-center`}>
                       {assignedSalesId ? (
                         <AssigneeCell
                           row={row}
@@ -405,10 +406,12 @@ const EnquiriesHome = () => {
                           accentClass="border-emerald-300/40 bg-emerald-500/15 text-emerald-100"
                         />
                       ) : (
-                        <span className="text-xs text-white/50">Unassigned</span>
+                        <div className="flex min-h-[4.5rem] items-center justify-center">
+                          <span className="text-xs text-white/50">Unassigned</span>
+                        </div>
                       )}
                     </td>
-                    <td className="border-r border-white/10 px-3 py-4 text-center text-sm text-white/90">
+                    <td className={`${tdClass} text-center`}>
                       {assignedCounsellorId ? (
                         <AssigneeCell
                           row={row}
@@ -416,56 +419,58 @@ const EnquiriesHome = () => {
                           accentClass="border-[#c9a86c]/40 bg-[#c9a86c]/15 text-[#fde68a]"
                         />
                       ) : (
-                        <span className="text-xs text-white/50">Unassigned</span>
-                      )}
-                    </td>
-                    <td className="px-3 py-4 text-center align-middle">
-                      {isFullyAssigned ? (
-                        <span className="text-xs font-semibold text-emerald-100">Team assigned</span>
-                      ) : autoAssign ? (
-                        <span className="text-xs text-white/70">
-                          Waiting for auto-assign…
-                        </span>
-                      ) : (
-                        <div className="mx-auto flex max-w-[280px] flex-col gap-2">
-                          <select
-                            value={draft.salesId}
-                            onChange={(e) =>
-                              setTeamDraft(enquiryId, { salesId: e.target.value })
-                            }
-                            className="w-full rounded-lg border border-white/25 bg-[#133726] px-2 py-1.5 text-xs text-white outline-none focus:border-[#5eead4]"
-                          >
-                            <option value="">Select sales</option>
-                            {salesTeam.map((member) => (
-                              <option key={getUserId(member)} value={getUserId(member)}>
-                                {getUserLabel(member)}
-                              </option>
-                            ))}
-                          </select>
-                          <select
-                            value={draft.counsellorId}
-                            onChange={(e) =>
-                              setTeamDraft(enquiryId, { counsellorId: e.target.value })
-                            }
-                            className="w-full rounded-lg border border-white/25 bg-[#133726] px-2 py-1.5 text-xs text-white outline-none focus:border-[#5eead4]"
-                          >
-                            <option value="">Select counsellor</option>
-                            {counsellorTeam.map((member) => (
-                              <option key={getUserId(member)} value={getUserId(member)}>
-                                {getUserLabel(member)}
-                              </option>
-                            ))}
-                          </select>
-                          <button
-                            type="button"
-                            disabled={isAssigning}
-                            onClick={() => handleAssignTeam(enquiryId)}
-                            className={`${rowActionButtonClass} border-[#5eead4]/50 bg-[#5eead4]/15 text-[#a7f3d0] hover:bg-[#5eead4]/25 disabled:opacity-50`}
-                          >
-                            {isAssigning ? "Assigning…" : "Assign team"}
-                          </button>
+                        <div className="flex min-h-[4.5rem] items-center justify-center">
+                          <span className="text-xs text-white/50">Unassigned</span>
                         </div>
                       )}
+                    </td>
+                    <td className={`${tdClass} text-center`}>
+                      <div className="mx-auto flex min-h-[4.5rem] w-full max-w-[15rem] flex-col items-stretch justify-center gap-2">
+                        {isFullyAssigned ? (
+                          <span className="text-xs font-semibold text-emerald-100">Team assigned</span>
+                        ) : autoAssign ? (
+                          <span className="text-xs text-white/70">Waiting for auto-assign…</span>
+                        ) : (
+                          <>
+                            <select
+                              value={draft.salesId}
+                              onChange={(e) =>
+                                setTeamDraft(enquiryId, { salesId: e.target.value })
+                              }
+                              className="w-full rounded-lg border border-white/25 bg-[#133726] px-2 py-2 text-xs text-white outline-none focus:border-[#5eead4]"
+                            >
+                              <option value="">Select sales</option>
+                              {salesTeam.map((member) => (
+                                <option key={getUserId(member)} value={getUserId(member)}>
+                                  {getUserLabel(member)}
+                                </option>
+                              ))}
+                            </select>
+                            <select
+                              value={draft.counsellorId}
+                              onChange={(e) =>
+                                setTeamDraft(enquiryId, { counsellorId: e.target.value })
+                              }
+                              className="w-full rounded-lg border border-white/25 bg-[#133726] px-2 py-2 text-xs text-white outline-none focus:border-[#5eead4]"
+                            >
+                              <option value="">Select counsellor</option>
+                              {counsellorTeam.map((member) => (
+                                <option key={getUserId(member)} value={getUserId(member)}>
+                                  {getUserLabel(member)}
+                                </option>
+                              ))}
+                            </select>
+                            <button
+                              type="button"
+                              disabled={isAssigning}
+                              onClick={() => handleAssignTeam(enquiryId)}
+                              className={`${rowActionButtonClass} border-[#5eead4]/50 bg-[#5eead4]/15 text-[#a7f3d0] hover:bg-[#5eead4]/25 disabled:opacity-50`}
+                            >
+                              {isAssigning ? "Assigning…" : "Assign team"}
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );

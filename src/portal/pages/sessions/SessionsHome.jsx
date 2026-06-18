@@ -4,6 +4,7 @@ import { useSelector } from "react-redux";
 import { getPortalSessions } from "../../../api/portal";
 import { normalizePagedItems } from "../../utils/format";
 import PortalAmbient from "../../components/PortalAmbient";
+import PortalLoader from "../../components/PortalLoader";
 import SessionsCalendar from "./components/SessionsCalendar";
 
 export default function PortalSessionsHome() {
@@ -58,14 +59,8 @@ export default function PortalSessionsHome() {
       ) : null}
 
       {loading && sessions.length === 0 ? (
-        <div className="relative flex min-h-[320px] items-center justify-center rounded-3xl border border-white/10 bg-white/5">
-          <motion.p
-            animate={{ opacity: [0.4, 1, 0.4] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-            className="text-sm text-white/60"
-          >
-            Loading your schedule…
-          </motion.p>
+        <div className="relative rounded-3xl border border-white/10 bg-white/5">
+          <PortalLoader label="Loading your schedule…" minHeight="min-h-[320px]" />
         </div>
       ) : sessions.length === 0 ? (
         <motion.p

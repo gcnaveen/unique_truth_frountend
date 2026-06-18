@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useOutletContext, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import PortalFingerprintPanel from "../../components/PortalFingerprintPanel";
+import PortalLoader from "../../components/PortalLoader";
 import {
   FINGERPRINT_SECTION_ID,
   isFingerprintFocus,
@@ -94,7 +95,7 @@ export default function PortalEnquiriesHome() {
       <section>
         <h2 className="text-lg font-semibold text-white">Your enquiries</h2>
         {loading ? (
-          <p className="mt-3 text-sm text-white/60">Loading…</p>
+          <PortalLoader label="Loading your journey…" minHeight="min-h-[24vh]" compact />
         ) : items.length === 0 ? (
           <p className="mt-3 rounded-2xl border border-white/10 bg-white/5 px-6 py-10 text-center text-sm text-white/60">
             No enquiries found on your account yet.

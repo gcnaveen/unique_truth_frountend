@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import ButterflyBackground from "../components/threejsanimations/Butterflybackground";
+import AppLoader from "../components/AppLoader";
 import {
   getAuthErrorMessage,
   loginUser,
@@ -105,6 +106,9 @@ const LoginPage = () => {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#0a1f14] text-white">
+      {isSubmitting ? (
+        <AppLoader label="Signing you in…" variant="overlay" />
+      ) : null}
       <div className="absolute inset-0 bg-linear-to-b from-[#0a1f14] via-[#0f2e1a] to-[#0d2416]" />
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute top-0 right-0 h-96 w-96 rounded-full bg-cyan-500/10 blur-3xl" />

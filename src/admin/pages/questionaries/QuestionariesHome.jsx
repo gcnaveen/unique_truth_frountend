@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { getQuestionaries } from "../../../api/questionaries";
+import AppLoader from "../../../components/AppLoader";
 
 const QuestionariesHome = () => {
   const navigate = useNavigate();
@@ -116,8 +117,8 @@ const QuestionariesHome = () => {
             <tbody className="divide-y divide-white/10 bg-white/10">
               {loading ? (
                 <tr>
-                  <td className="px-4 py-6 text-sm text-white md:px-5" colSpan={4}>
-                    Loading questionaries...
+                  <td className="px-4 py-6 md:px-5" colSpan={4}>
+                    <AppLoader label="Loading questionaries…" minHeight="min-h-[22vh]" compact />
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
