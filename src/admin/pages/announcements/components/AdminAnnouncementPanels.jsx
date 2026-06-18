@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
 import UserAvatar from "../../../../components/profile/UserAvatar";
+import AnnouncementAttachmentUploader from "../../../../components/announcements/AnnouncementAttachmentUploader";
+import {
+  AnnouncementAttachmentBadge,
+} from "../../../../components/announcements/AnnouncementAttachments";
 import {
   createAdminAnnouncement,
   getAdminAnnouncementById,
@@ -7,6 +11,10 @@ import {
 } from "../../../../api/announcements";
 import { formatDateTime } from "../../../../portal/utils/format";
 import { formatAccountRole } from "../../../../utils/accountProfile";
+import {
+  buildAttachmentInput,
+  getAnnouncementAttachments,
+} from "../../../../utils/announcementAttachments";
 import {
   formatAnnouncementPreview,
   formatTargetRoles,
@@ -25,26 +33,30 @@ const primaryBtnClass =
 export default function AdminAnnouncementCompose({ accessToken, onCreated }) {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+  const [attachments, setAttachments] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (!body.trim()) {
-      setError("Message body is required.");
+    const trimmedBody = body.trim();
+    if (!trimmedBody && attachments.length === 0) {
+      setError("Add a message, at least one attachment, or both.");
       return;
     }
     try {
       setSubmitting(true);
       setError("");
       const payload = {
-        body: body.trim(),
+        body: trimmedBody,
         ...(title.trim() ? { title: title.trim() } : {}),
+        ...(attachments.length ? { attachments } : {}),
         targetRoles: ["user"],
       };
       const response = await createAdminAnnouncement(accessToken, payload);
       setTitle("");
       setBody("");
+      setAttachments([]);
       onCreated?.(response);
     } catch (submitError) {
       setError(submitError?.response?.data?.message || "Failed to broadcast announcement.");
@@ -58,7 +70,8 @@ export default function AdminAnnouncementCompose({ accessToken, onCreated }) {
       <div>
         <h2 className="text-lg font-semibold text-white">Broadcast message</h2>
         <p className="mt-1 text-sm text-white/60">
-          Send an update to all portal members. They can reply in the thread and react with emoji.
+          Send an update to all portal members with text, photos, videos, or documents. They can
+          reply in the thread and react with emoji.
         </p>
       </div>
 
@@ -83,7 +96,7 @@ export default function AdminAnnouncementCompose({ accessToken, onCreated }) {
 
       <div>
         <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-white/55">
-          Message
+          Message (optional if you attach media)
         </label>
         <textarea
           value={body}
@@ -92,9 +105,20 @@ export default function AdminAnnouncementCompose({ accessToken, onCreated }) {
           maxLength={5000}
           className={`${inputClass} resize-y`}
           placeholder="Write your announcement…"
-          required
         />
         <p className="mt-1 text-xs text-white/45">{body.length}/5000</p>
+      </div>
+
+      <div>
+        <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-white/55">
+          Attachments
+        </label>
+        <AnnouncementAttachmentUploader
+          accessToken={accessToken}
+          attachments={attachments}
+          onChange={setAttachments}
+          disabled={submitting}
+        />
       </div>
 
       <p className="text-xs text-white/50">Audience: Portal members only</p>
@@ -116,10 +140,13 @@ export function AdminAnnouncementListItem({ item, onSelect, onDelete, deleting }
         <p className="mt-1 text-xs text-white/55">
           {formatDateTime(item?.createdAt)} · {formatTargetRoles(item?.targetRoles)}
         </p>
-        <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-white/45">
-          {replyCount} repl{replyCount === 1 ? "y" : "ies"} · {item?.reactions?.total || 0}{" "}
-          reactions
-        </p>
+        <div className="mt-1 flex flex-wrap items-center gap-2">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-white/45">
+            {replyCount} repl{replyCount === 1 ? "y" : "ies"} · {item?.reactions?.total || 0}{" "}
+            reactions
+          </p>
+          <AnnouncementAttachmentBadge announcement={item} />
+        </div>
       </button>
       <button
         type="button"
@@ -143,6 +170,7 @@ export function AdminAnnouncementDetailDrawer({
   const [detail, setDetail] = useState(item);
   const [replies, setReplies] = useState([]);
   const [editBody, setEditBody] = useState(item?.body || "");
+  const [editAttachments, setEditAttachments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -161,6 +189,9 @@ export function AdminAnnouncementDetailDrawer({
         setDetail(record);
         setReplies(thread.replies);
         setEditBody(record?.body || "");
+        setEditAttachments(
+          getAnnouncementAttachments(record).map((attachment) => buildAttachmentInput(attachment)),
+        );
       } catch (fetchError) {
         setError(fetchError?.response?.data?.message || "Failed to load announcement.");
       } finally {
@@ -172,15 +203,28 @@ export function AdminAnnouncementDetailDrawer({
 
   const handleSave = async () => {
     if (!announcementId) return;
+    const trimmedBody = editBody.trim();
+    if (!trimmedBody && editAttachments.length === 0) {
+      setError("Add message text, at least one attachment, or both.");
+      return;
+    }
     try {
       setSaving(true);
       setError("");
       const response = await patchAdminAnnouncement(accessToken, announcementId, {
-        body: editBody.trim(),
+        body: trimmedBody,
         ...(detail?.title ? { title: detail.title } : {}),
+        attachments: editAttachments,
       });
-      const record = pickAnnouncement(response) || { ...detail, body: editBody.trim() };
+      const record = pickAnnouncement(response) || {
+        ...detail,
+        body: trimmedBody,
+        attachments: editAttachments,
+      };
       setDetail(record);
+      setEditAttachments(
+        getAnnouncementAttachments(record).map((attachment) => buildAttachmentInput(attachment)),
+      );
       onUpdated?.(record);
     } catch (saveError) {
       setError(saveError?.response?.data?.message || "Failed to update announcement.");
@@ -235,6 +279,18 @@ export function AdminAnnouncementDetailDrawer({
               rows={6}
               className={`${inputClass} resize-y`}
             />
+
+            <div>
+              <h4 className="text-sm font-semibold text-white">Attachments</h4>
+              <div className="mt-3">
+                <AnnouncementAttachmentUploader
+                  accessToken={accessToken}
+                  attachments={editAttachments}
+                  onChange={setEditAttachments}
+                  disabled={saving}
+                />
+              </div>
+            </div>
 
             <button
               type="button"

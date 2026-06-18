@@ -260,3 +260,15 @@ export const deletePortalAnnouncementArchive = async (token, announcementId) => 
   );
   return response.data;
 };
+
+export const getPortalAnnouncementAttachmentDownload = async (
+  token,
+  announcementId,
+  attachmentId,
+) => {
+  const response = await portalClient.get(
+    `/portal/announcements/${announcementId}/attachments/${attachmentId}/download`,
+    authHeaders(token),
+  );
+  return response.data;
+};

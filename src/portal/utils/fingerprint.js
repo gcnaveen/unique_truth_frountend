@@ -17,15 +17,60 @@ export const buildJourneyFingerprintPath = (enquiryId) => {
   return `${base}?${FINGERPRINT_FOCUS_PARAM}=${FINGERPRINT_FOCUS_VALUE}`;
 };
 
+const isFingerprintRecord = (value) =>
+  Boolean(
+    value &&
+      typeof value === "object" &&
+      (value._id ||
+        value.id ||
+        value.uploadedAt ||
+        value.expiresAt ||
+        value.storageKey ||
+        value.s3Key),
+  );
+
 export const pickFingerprintFromResponse = (response) => {
   const payload = unwrapUploadPayload(response);
-  const record = payload?.fingerprint ?? null;
-  if (!record || record === null) return null;
+  const nested = payload?.fingerprint;
+  const record =
+    nested && nested !== null
+      ? nested
+      : isFingerprintRecord(payload)
+        ? payload
+        : null;
+  if (!record) return null;
   return {
     record,
-    viewUrl: payload?.viewUrl || record?.viewUrl || record?.url || "",
+    viewUrl:
+      payload?.viewUrl ||
+      record?.viewUrl ||
+      record?.url ||
+      record?.signedUrl ||
+      "",
     expiresInHours: payload?.expiresInHours ?? record?.expiresInHours,
   };
+};
+
+export const pickProfileFingerprintMeta = (profile) => {
+  const payload = unwrapPortalPayload(profile);
+  return payload?.fingerprint ?? null;
+};
+
+export const profileIndicatesFingerprint = (profile) => {
+  const meta = pickProfileFingerprintMeta(profile);
+  if (!meta) return false;
+  const status = String(meta?.status || "").toLowerCase();
+  if (meta?.hasFingerprint === true || status === "uploaded") return true;
+  return isFingerprintRecord(meta);
+};
+
+export const isManagerUploadedFingerprint = (record) => {
+  const uploadedBy = String(record?.uploadedBy || record?.uploadedByRole || "").toLowerCase();
+  return (
+    uploadedBy === "manager" ||
+    record?.uploadedOnBehalf === true ||
+    record?.uploadSource === "manager"
+  );
 };
 
 export const hasActivePortalFingerprint = (response) => {
@@ -71,9 +116,13 @@ export const loadPortalEnquiryList = async (accessToken) => {
   return normalizePagedItems(unwrapPortalPayload(response)).items;
 };
 
-export const checkPortalFingerprintStatus = async (accessToken, enquiryId) => {
+export const checkPortalFingerprintStatus = async (accessToken, enquiryId, profile = null) => {
   if (!accessToken || !enquiryId) {
-    return { enquiryId: "", hasFingerprint: false, paymentRequired: false };
+    return {
+      enquiryId: "",
+      hasFingerprint: profileIndicatesFingerprint(profile),
+      paymentRequired: false,
+    };
   }
 
   try {
@@ -87,6 +136,9 @@ export const checkPortalFingerprintStatus = async (accessToken, enquiryId) => {
   } catch (error) {
     if (error?.response?.status === 402) {
       return { enquiryId, hasFingerprint: false, paymentRequired: true };
+    }
+    if (profileIndicatesFingerprint(profile)) {
+      return { enquiryId, hasFingerprint: true, paymentRequired: false };
     }
     return { enquiryId, hasFingerprint: false, paymentRequired: false, error };
   }

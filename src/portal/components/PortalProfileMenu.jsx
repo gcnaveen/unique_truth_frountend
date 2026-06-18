@@ -133,7 +133,7 @@ export default function PortalProfileMenu({
                 onClick={() => setOpen(false)}
                 className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium text-[rgba(255,248,236,0.88)] no-underline transition hover:bg-white/[0.06] hover:text-[#c9a86c]"
               >
-                Account & privacy
+                Account & profile
               </Link>
               <Link
                 to="/portal/dashboard"

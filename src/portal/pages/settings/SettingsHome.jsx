@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useOutletContext } from "react-router-dom";
 import { changeAccountPassword } from "../../../api/account";
 import {
   getPortalDataExport,
@@ -8,6 +9,7 @@ import {
   postPortalDataRequest,
 } from "../../../api/portal";
 import ProfilePhotoEditor from "../../../components/profile/ProfilePhotoEditor";
+import PortalFingerprintPanel from "../../components/PortalFingerprintPanel";
 import { passwordChanged, updateUser } from "../../../reducers/user";
 import { MIN_PASSWORD_LENGTH } from "../../../utils/authConstants";
 import { pickPortalAccessFromLogin } from "../../utils/access";
@@ -16,9 +18,11 @@ import {
   pickUserProfilePhotoUrl,
   unwrapApiPayload,
 } from "../../../utils/profilePhoto";
+import { loadPortalEnquiryList, resolvePrimaryEnquiryId } from "../../utils/fingerprint";
 
 export default function PortalSettingsHome() {
   const dispatch = useDispatch();
+  const { profile, refreshFingerprintReminder } = useOutletContext() ?? {};
   const {
     access_token,
     name: storedName,
@@ -31,6 +35,7 @@ export default function PortalSettingsHome() {
   );
   const [name, setName] = useState(storedName || "");
   const [photoUrl, setPhotoUrl] = useState(storedPhoto || "");
+  const [primaryEnquiryId, setPrimaryEnquiryId] = useState("");
   const [loading, setLoading] = useState(true);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -43,6 +48,16 @@ export default function PortalSettingsHome() {
   const [success, setSuccess] = useState("");
 
   const panelClass = "rounded-2xl border border-white/15 bg-white/8 p-5 md:p-6";
+
+  const loadPrimaryEnquiry = useCallback(async () => {
+    if (!access_token) return;
+    try {
+      const enquiries = await loadPortalEnquiryList(access_token);
+      setPrimaryEnquiryId(resolvePrimaryEnquiryId(enquiries, profile));
+    } catch {
+      setPrimaryEnquiryId(resolvePrimaryEnquiryId([], profile));
+    }
+  }, [access_token, profile]);
 
   useEffect(() => {
     if (!access_token) return;
@@ -71,7 +86,8 @@ export default function PortalSettingsHome() {
       }
     };
     load();
-  }, [access_token, dispatch]);
+    loadPrimaryEnquiry();
+  }, [access_token, dispatch, loadPrimaryEnquiry]);
 
   const handleNameSave = async (event) => {
     event.preventDefault();
@@ -183,9 +199,9 @@ export default function PortalSettingsHome() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="font-serif text-3xl font-semibold text-white">Privacy & account</h1>
+        <h1 className="font-serif text-3xl font-semibold text-white">My profile</h1>
         <p className="mt-2 text-sm text-white/70">
-          Manage your profile, password, data export, and privacy requests.
+          Manage your profile photo, fingerprint scan, password, and account settings.
         </p>
       </div>
 
@@ -198,6 +214,16 @@ export default function PortalSettingsHome() {
         <div className="rounded-xl border border-emerald-300/40 bg-emerald-500/15 px-4 py-3 text-sm text-emerald-100">
           {success}
         </div>
+      ) : null}
+
+      {primaryEnquiryId ? (
+        <PortalFingerprintPanel
+          enquiryId={primaryEnquiryId}
+          accessToken={access_token}
+          onUploaded={() => {
+            refreshFingerprintReminder?.();
+          }}
+        />
       ) : null}
 
       {profileEdit?.canEditName ? (

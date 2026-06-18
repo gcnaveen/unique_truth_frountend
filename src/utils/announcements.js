@@ -35,12 +35,21 @@ export const pickAnnouncement = (response) => {
 export const getAnnouncementId = (item) =>
   item?.id || item?._id || item?.announcementId || "";
 
+import {
+  announcementHasMedia,
+  formatAttachmentCountLabel,
+} from "./announcementAttachments";
+
 export const formatAnnouncementPreview = (item) => {
   const title = String(item?.title || "").trim();
   if (title) return title;
   const body = String(item?.body || "").trim();
-  if (!body) return "Announcement";
-  return body.length > 80 ? `${body.slice(0, 80)}…` : body;
+  if (body) return body.length > 80 ? `${body.slice(0, 80)}…` : body;
+  if (announcementHasMedia(item)) {
+    const mediaLabel = formatAttachmentCountLabel(item);
+    return mediaLabel || "Media announcement";
+  }
+  return "Announcement";
 };
 
 export const formatTargetRoles = (roles = []) => {

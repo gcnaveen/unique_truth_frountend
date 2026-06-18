@@ -46,3 +46,21 @@ export const deleteAdminAnnouncement = async (token, announcementId) => {
   );
   return response.data;
 };
+
+export const presignAdminAnnouncementAttachment = async (token, payload) => {
+  const response = await client.post(
+    "/admin/announcements/attachments/presign",
+    payload,
+    authHeaders(token),
+  );
+  return response.data;
+};
+
+export const confirmAdminAnnouncementAttachment = async (token, payload) => {
+  const response = await client.post(
+    "/admin/announcements/attachments/confirm",
+    payload,
+    authHeaders(token),
+  );
+  return response.data;
+};

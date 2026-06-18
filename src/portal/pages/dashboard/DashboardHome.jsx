@@ -33,7 +33,7 @@ const cardClass =
 const TILE_ICONS = {
   journey: "✦",
   sessions: "◷",
-  privacy: "◇",
+  profile: "◇",
   announcements: "📣",
 };
 
@@ -139,10 +139,10 @@ export default function PortalDashboardHome() {
       badge: announcementUnreadCount > 0 ? announcementUnreadCount : null,
     },
     {
-      key: "privacy",
+      key: "profile",
       to: "/portal/dashboard/settings",
-      title: "Privacy",
-      desc: "Password, data export, and account settings",
+      title: "My profile",
+      desc: "Profile photo, password, and account settings",
     },
   ];
 

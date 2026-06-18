@@ -4,6 +4,10 @@ import { useOutletContext } from "react-router-dom";
 import UserAvatar from "../components/profile/UserAvatar";
 import AnnouncementReactionBar from "../components/announcements/AnnouncementReactionBar";
 import {
+  AnnouncementAttachmentBadge,
+  AnnouncementAttachments,
+} from "../components/announcements/AnnouncementAttachments";
+import {
   deletePortalAnnouncementArchive,
   getPortalAnnouncementById,
   getPortalAnnouncements,
@@ -71,6 +75,9 @@ function AnnouncementListItem({ item, active, onSelect }) {
               : "No replies yet"}
             {item?.reactions?.total > 0 ? ` · ${item.reactions.total} reactions` : ""}
           </p>
+          <div className="mt-1">
+            <AnnouncementAttachmentBadge announcement={item} />
+          </div>
         </div>
       </div>
     </button>
@@ -243,7 +250,8 @@ export default function AnnouncementsInboxPage() {
             Announcements
           </h1>
           <p className="mt-2 text-sm text-white/75">
-            Messages from admin. Reply in the thread, react with emoji, or archive for yourself.
+            Messages from admin. Reply in the thread, react with emoji, view photos and videos, or
+            archive for yourself.
           </p>
         </div>
         {view === "inbox" && unreadCount > 0 ? (
@@ -323,9 +331,18 @@ export default function AnnouncementsInboxPage() {
                 {detail?.title ? (
                   <h2 className="mt-4 text-xl font-semibold text-white">{detail.title}</h2>
                 ) : null}
-                <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-white/85">
-                  {detail?.body}
-                </p>
+                {detail?.body ? (
+                  <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-white/85">
+                    {detail.body}
+                  </p>
+                ) : null}
+                <div className="mt-4">
+                  <AnnouncementAttachments
+                    announcement={detail}
+                    announcementId={selectedId}
+                    accessToken={access_token}
+                  />
+                </div>
               </div>
 
               <AnnouncementReactionBar

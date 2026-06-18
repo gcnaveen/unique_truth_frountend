@@ -16,6 +16,7 @@ import {
 import { formatDateTime } from "../utils/format";
 import {
   FINGERPRINT_SECTION_ID,
+  isManagerUploadedFingerprint,
   pickFingerprintFromResponse,
 } from "../utils/fingerprint";
 
@@ -258,6 +259,7 @@ export default function PortalFingerprintPanel({
 
   const activeRecord = fingerprint?.record;
   const viewUrl = fingerprint?.viewUrl || "";
+  const managerUploaded = isManagerUploadedFingerprint(activeRecord);
   const countdown = formatExpiryCountdown(
     activeRecord?.expiresAt,
     fingerprint?.expiresInHours,
@@ -281,9 +283,13 @@ export default function PortalFingerprintPanel({
             <p className="text-xs font-semibold uppercase tracking-wide text-[#5eead4]">
               Fingerprint scan
             </p>
-            <h2 className="mt-1 text-lg font-semibold text-white">Upload your fingerprint</h2>
+            <h2 className="mt-1 text-lg font-semibold text-white">
+              {hasUploaded ? "Your fingerprint scan" : "Upload your fingerprint"}
+            </h2>
             <p className="mt-1 text-xs text-white/55">
-              Required for your analysis. One active scan per enquiry. Stored for 48 hours only.
+              {managerUploaded
+                ? "Uploaded on your behalf by your clinic team. Stored securely for 48 hours only."
+                : "Required for your analysis. One active scan per enquiry. Stored for 48 hours only."}
             </p>
           </div>
           {needsUpload ? (

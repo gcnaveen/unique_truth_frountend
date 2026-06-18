@@ -17,6 +17,7 @@ import { PORTAL_ANNOUNCEMENTS_PATH, pickAnnouncementUnreadCount } from "../../ut
 import {
   checkPortalFingerprintStatus,
   loadPortalEnquiryList,
+  profileIndicatesFingerprint,
   resolvePrimaryEnquiryId,
 } from "../utils/fingerprint";
 
@@ -25,7 +26,7 @@ const navItems = [
   { path: "/portal/dashboard/enquiries", label: "My journey", end: false },
   { path: "/portal/dashboard/sessions", label: "Sessions", end: false },
   { path: "/portal/dashboard/announcements", label: "Announcements", end: false },
-  { path: "/portal/dashboard/settings", label: "Privacy", end: false },
+  { path: "/portal/dashboard/settings", label: "My profile", end: false },
 ];
 
 export default function PortalLayout() {
@@ -107,12 +108,20 @@ export default function PortalLayout() {
       setFingerprintReminderOpen(false);
       return;
     }
-    if (location.pathname.startsWith("/portal/dashboard/enquiries")) {
+    if (
+      location.pathname.startsWith("/portal/dashboard/enquiries") ||
+      location.pathname.startsWith("/portal/dashboard/settings")
+    ) {
       setFingerprintReminderOpen(false);
       return;
     }
 
     try {
+      if (profileIndicatesFingerprint(profile)) {
+        setFingerprintReminderOpen(false);
+        return;
+      }
+
       const enquiries = await loadPortalEnquiryList(access_token);
       const enquiryId = resolvePrimaryEnquiryId(enquiries, profile);
       if (!enquiryId) {
@@ -121,7 +130,7 @@ export default function PortalLayout() {
       }
 
       setPrimaryEnquiryId(enquiryId);
-      const status = await checkPortalFingerprintStatus(access_token, enquiryId);
+      const status = await checkPortalFingerprintStatus(access_token, enquiryId, profile);
       if (status.paymentRequired || status.hasFingerprint) {
         setFingerprintReminderOpen(false);
         return;
