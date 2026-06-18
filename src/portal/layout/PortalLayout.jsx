@@ -9,8 +9,10 @@ import PortalSiteHeader from "../components/PortalSiteHeader";
 import { pickUserProfilePhotoUrl } from "../../utils/profilePhoto";
 import { pickProfileEdit } from "../../utils/profileEdit";
 import {
-  canAccessPortalDashboard,
+  getPortalProfileLoadErrorMessage,
+  hasStoredPortalDashboardAccess,
   pickPortalAccessFromLogin,
+  resolvePortalDashboardAccess,
   unwrapPortalPayload,
 } from "../utils/access";
 import { PORTAL_ANNOUNCEMENTS_PATH, pickAnnouncementUnreadCount } from "../../utils/announcements";
@@ -34,11 +36,12 @@ export default function PortalLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const isPortalHome = location.pathname === "/portal/dashboard";
-  const { name, email_id, access_token, counselingLevel } = useSelector(
+  const { name, email_id, access_token, counselingLevel, ...storedUser } = useSelector(
     (state) => state.user.value,
   );
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [profileError, setProfileError] = useState("");
   const [fingerprintReminderOpen, setFingerprintReminderOpen] = useState(false);
   const [primaryEnquiryId, setPrimaryEnquiryId] = useState("");
   const [announcementUnreadCount, setAnnouncementUnreadCount] = useState(0);
@@ -78,9 +81,10 @@ export default function PortalLayout() {
     const load = async () => {
       try {
         setLoading(true);
+        setProfileError("");
         await refreshProfile();
-      } catch {
-        setProfile(null);
+      } catch (error) {
+        setProfileError(getPortalProfileLoadErrorMessage(error));
       } finally {
         setLoading(false);
       }
@@ -94,7 +98,24 @@ export default function PortalLayout() {
     }
   }, [loading, access_token, location.pathname, refreshAnnouncementUnreadCount]);
 
-  const hasAccess = canAccessPortalDashboard(profile);
+  const hasAccess = resolvePortalDashboardAccess(profile, storedUser);
+  const effectiveProfile =
+    profile || (hasStoredPortalDashboardAccess(storedUser) ? storedUser : null);
+  const showPaymentGate = !loading && !hasAccess && !profileError;
+  const showConnectionError = !loading && !hasAccess && Boolean(profileError);
+
+  const handleRetryProfile = async () => {
+    try {
+      setLoading(true);
+      setProfileError("");
+      await refreshProfile();
+    } catch (error) {
+      setProfileError(getPortalProfileLoadErrorMessage(error));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const onAnnouncementsRoute = location.pathname.startsWith(PORTAL_ANNOUNCEMENTS_PATH);
   const announcementsNavItem = navItems.find((item) => item.path === PORTAL_ANNOUNCEMENTS_PATH);
   const visibleNavItems = hasAccess
@@ -117,20 +138,24 @@ export default function PortalLayout() {
     }
 
     try {
-      if (profileIndicatesFingerprint(profile)) {
+      if (profileIndicatesFingerprint(effectiveProfile)) {
         setFingerprintReminderOpen(false);
         return;
       }
 
       const enquiries = await loadPortalEnquiryList(access_token);
-      const enquiryId = resolvePrimaryEnquiryId(enquiries, profile);
+      const enquiryId = resolvePrimaryEnquiryId(enquiries, effectiveProfile);
       if (!enquiryId) {
         setFingerprintReminderOpen(false);
         return;
       }
 
       setPrimaryEnquiryId(enquiryId);
-      const status = await checkPortalFingerprintStatus(access_token, enquiryId, profile);
+      const status = await checkPortalFingerprintStatus(
+        access_token,
+        enquiryId,
+        effectiveProfile,
+      );
       if (status.paymentRequired || status.hasFingerprint) {
         setFingerprintReminderOpen(false);
         return;
@@ -139,7 +164,7 @@ export default function PortalLayout() {
     } catch {
       setFingerprintReminderOpen(false);
     }
-  }, [access_token, hasAccess, location.pathname, profile]);
+  }, [access_token, hasAccess, location.pathname, effectiveProfile]);
 
   useEffect(() => {
     if (!loading && hasAccess) {
@@ -147,8 +172,8 @@ export default function PortalLayout() {
     }
   }, [loading, hasAccess, location.pathname, refreshFingerprintReminder]);
 
-  const displayName = profile?.name || name || "Member";
-  const levelLabel = counselingLevel || profile?.counselingLevel;
+  const displayName = effectiveProfile?.name || name || "Member";
+  const levelLabel = counselingLevel || effectiveProfile?.counselingLevel;
 
   const handleLogout = () => {
     dispatch(logout());
@@ -162,7 +187,7 @@ export default function PortalLayout() {
         hasAccess={hasAccess || onAnnouncementsRoute}
         announcementUnreadCount={announcementUnreadCount}
         showNav={!loading}
-        profile={!loading ? profile || { name: displayName, email: email_id } : null}
+        profile={!loading ? effectiveProfile || { name: displayName, email: email_id } : null}
         displayName={displayName}
         email={email_id}
         levelLabel={levelLabel}
@@ -174,14 +199,48 @@ export default function PortalLayout() {
           <div className="mx-auto flex min-h-[50vh] max-w-6xl items-center justify-center px-4 md:px-8">
             <p className="text-sm text-[rgba(255,248,236,0.65)]">Loading your portal…</p>
           </div>
-        ) : !hasAccess && !onAnnouncementsRoute ? (
+        ) : showConnectionError && !onAnnouncementsRoute ? (
+          <div className="mx-auto flex min-h-[50vh] max-w-lg items-center justify-center px-4 py-8 md:px-8">
+            <div className="w-full rounded-3xl border border-amber-400/30 bg-amber-500/10 p-6 text-center shadow-2xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-200/90">
+                Connection problem
+              </p>
+              <h1 className="mt-2 font-serif text-2xl font-semibold text-white">
+                Could not load your portal
+              </h1>
+              <p className="mt-3 text-sm leading-relaxed text-white/75">{profileError}</p>
+              <button
+                type="button"
+                onClick={handleRetryProfile}
+                disabled={loading}
+                className="mt-6 w-full rounded-xl bg-linear-to-r from-[#c9a86c] to-[#5eead4] px-4 py-3 text-sm font-bold text-[#0f2e1a] disabled:opacity-50"
+              >
+                {loading ? "Retrying…" : "Try again"}
+              </button>
+            </div>
+          </div>
+        ) : showPaymentGate && !onAnnouncementsRoute ? (
           <div className="mx-auto max-w-6xl px-4 py-8 md:px-8 md:py-10">
             <PaymentGate
               accessToken={access_token}
               profile={profile}
               announcementUnreadCount={announcementUnreadCount}
               onAccessGranted={(me) => {
-                setProfile(me);
+                const data = unwrapPortalPayload(me);
+                const access = pickPortalAccessFromLogin(data);
+                setProfile(data);
+                setProfileError("");
+                dispatch(
+                  updateUser({
+                    canAccessDashboard: access.canAccessDashboard,
+                    advancePayment: access.advancePayment,
+                    fullPayment: access.fullPayment,
+                    counselingLevel: access.counselingLevel,
+                    name: data.name,
+                    profilePhotoUrl: pickUserProfilePhotoUrl(data),
+                    profileEdit: pickProfileEdit(data, { isPortalUser: true }),
+                  }),
+                );
                 navigate("/portal/dashboard", { replace: true });
               }}
             />
@@ -192,9 +251,24 @@ export default function PortalLayout() {
               isPortalHome ? "" : "mx-auto max-w-6xl px-4 py-8 md:px-8 md:py-10"
             }
           >
+            {profileError && hasAccess ? (
+              <div className="mb-6 rounded-xl border border-amber-400/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p>{profileError} Showing your last known portal access.</p>
+                  <button
+                    type="button"
+                    onClick={handleRetryProfile}
+                    disabled={loading}
+                    className="rounded-lg border border-amber-300/40 bg-amber-500/15 px-3 py-1.5 text-xs font-semibold text-amber-50 disabled:opacity-50"
+                  >
+                    {loading ? "Retrying…" : "Retry"}
+                  </button>
+                </div>
+              </div>
+            ) : null}
             <Outlet
               context={{
-                profile,
+                profile: effectiveProfile,
                 refreshProfile,
                 refreshFingerprintReminder,
                 announcementUnreadCount,

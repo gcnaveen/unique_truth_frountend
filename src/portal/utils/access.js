@@ -17,6 +17,31 @@ export const canAccessPortalDashboard = (profile) => {
   return getAdvancePaymentStatus(payload) === "completed";
 };
 
+/** Trust persisted login/session state when live profile is unavailable. */
+export const hasStoredPortalDashboardAccess = (storedUser = {}) => {
+  if (storedUser?.canAccessDashboard === true) return true;
+  if (storedUser?.canAccessDashboard === false) {
+    return getAdvancePaymentStatus(storedUser) === "completed";
+  }
+  return getAdvancePaymentStatus(storedUser) === "completed";
+};
+
+/**
+ * Prefer a fresh /portal/me response; fall back to stored session on network errors.
+ */
+export const resolvePortalDashboardAccess = (profile, storedUser = null) => {
+  if (profile) return canAccessPortalDashboard(profile);
+  return hasStoredPortalDashboardAccess(storedUser);
+};
+
+export const getPortalProfileLoadErrorMessage = (error) => {
+  if (!error) return "Could not load your portal profile.";
+  if (!error?.response) {
+    return "Unable to reach the server. Check your internet connection and try again.";
+  }
+  return error?.response?.data?.message || error?.message || "Could not load your portal profile.";
+};
+
 /**
  * Full program payment — NOT the same as advance payment (dashboard access).
  * Uses GET /portal/payments/full/status → fullPayment.canDownloadMedia when present.
