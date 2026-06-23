@@ -4,6 +4,7 @@ import {
   getSalesEnquiryById,
   updateSalesEnquiryStatus,
 } from "../../../../api/sales";
+import EnquiryAnswersPanel from "../../../../components/enquiries/EnquiryAnswersPanel";
 import { useAppAlert } from "../../../../context/AppAlertContext";
 
 const formatDateTime = (value) => {
@@ -213,6 +214,10 @@ export default function SalesEnquiryDrawer({
                   <p className="mt-1 text-white">{text(enquiry.preferredBranchName)}</p>
                 </div>
               ) : null}
+            </div>
+
+            <div className="mt-5">
+              <EnquiryAnswersPanel enquiry={enquiry} />
             </div>
 
             <div className="mt-5">

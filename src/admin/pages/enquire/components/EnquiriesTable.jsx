@@ -89,7 +89,7 @@ export default function EnquiriesTable({ rows, loading, onView }) {
                     onClick={() => onView?.(row)}
                     className="rounded-lg border border-[#5eead4]/60 bg-[#5eead4]/10 px-3 py-1.5 text-xs font-semibold text-[#a7f3d0] hover:bg-[#5eead4]/20"
                   >
-                    View
+                    View details
                   </button>
                 </td>
               </tr>

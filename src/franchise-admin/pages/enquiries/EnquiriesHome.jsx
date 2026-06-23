@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
+import EnquiryDetailsDrawer from "../../../admin/pages/enquire/components/EnquiryDetailsDrawer";
 import UserAvatar from "../../../components/profile/UserAvatar";
 import { pickUserProfilePhotoUrl } from "../../../utils/profilePhoto";
 import {
@@ -117,6 +118,8 @@ const EnquiriesHome = () => {
   const [teamByEnquiry, setTeamByEnquiry] = useState({});
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [selectedEnquiry, setSelectedEnquiry] = useState(null);
+  const [isDrawerVisible, setIsDrawerVisible] = useState(false);
 
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil((totalCount || enquiries.length) / pageLimit)),
@@ -196,6 +199,19 @@ const EnquiriesHome = () => {
     if (!access_token) return;
     loadEnquiries();
   }, [access_token, currentPage, pageLimit]);
+
+  useEffect(() => {
+    if (!selectedEnquiry) {
+      setIsDrawerVisible(false);
+      return;
+    }
+    requestAnimationFrame(() => setIsDrawerVisible(true));
+  }, [selectedEnquiry]);
+
+  const closeDrawer = () => {
+    setIsDrawerVisible(false);
+    setTimeout(() => setSelectedEnquiry(null), 300);
+  };
 
   const handleToggleAutoAssign = async () => {
     const next = !autoAssign;
@@ -335,29 +351,30 @@ const EnquiriesHome = () => {
       ) : null}
 
       <div className="overflow-x-auto rounded-xl border border-white/20 bg-white/5">
-        <table className="w-full min-w-[1180px] table-fixed border-collapse">
+        <table className="w-full min-w-[1260px] table-fixed border-collapse">
           <thead className="bg-white/20">
             <tr>
-              <th className={`${thClass} w-[4%] text-center`}>#</th>
-              <th className={`${thClass} w-[11%] text-left`}>Name</th>
-              <th className={`${thClass} w-[15%] text-left`}>Contact</th>
-              <th className={`${thClass} w-[12%] text-left`}>Service</th>
-              <th className={`${thClass} w-[12%] text-left`}>Branch</th>
-              <th className={`${thClass} w-[13%] text-center`}>Sales</th>
-              <th className={`${thClass} w-[13%] text-center`}>Counsellor</th>
-              <th className={`${thClass} w-[20%] text-center`}>Assignment</th>
+              <th className={`${thClass} w-[3%] text-center`}>#</th>
+              <th className={`${thClass} w-[10%] text-left`}>Name</th>
+              <th className={`${thClass} w-[14%] text-left`}>Contact</th>
+              <th className={`${thClass} w-[11%] text-left`}>Service</th>
+              <th className={`${thClass} w-[10%] text-left`}>Branch</th>
+              <th className={`${thClass} w-[12%] text-center`}>Sales</th>
+              <th className={`${thClass} w-[12%] text-center`}>Counsellor</th>
+              <th className={`${thClass} w-[18%] text-center`}>Assignment</th>
+              <th className={`${thClass} w-[10%] text-center`}>Details</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/10">
             {loading ? (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-sm text-white">
+                <td colSpan={9} className="px-4 py-8 text-center text-sm text-white">
                   Loading enquiries…
                 </td>
               </tr>
             ) : enquiries.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-sm text-white">
+                <td colSpan={9} className="px-4 py-8 text-center text-sm text-white">
                   No enquiries for your franchise right now.
                 </td>
               </tr>
@@ -472,6 +489,17 @@ const EnquiriesHome = () => {
                         )}
                       </div>
                     </td>
+                    <td className={`${tdClass} text-center`}>
+                      <div className="flex min-h-[4.5rem] items-center justify-center">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedEnquiry(row)}
+                          className={`${rowActionButtonClass} border-[#5eead4]/50 bg-[#5eead4]/15 text-[#a7f3d0] hover:bg-[#5eead4]/25`}
+                        >
+                          View details
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 );
               })
@@ -502,6 +530,17 @@ const EnquiriesHome = () => {
             Next
           </button>
         </div>
+      ) : null}
+
+      {selectedEnquiry ? (
+        <EnquiryDetailsDrawer
+          enquiryId={getEnquiryId(selectedEnquiry)}
+          initialEnquiry={selectedEnquiry}
+          accessToken={access_token}
+          open={isDrawerVisible}
+          onClose={closeDrawer}
+          fetchEnquiry={getFranchiseAdminEnquiryById}
+        />
       ) : null}
     </section>
   );

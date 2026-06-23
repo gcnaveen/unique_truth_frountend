@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getEnquiryById } from "../../../../api/enquire";
+import EnquiryAnswersPanel from "../../../../components/enquiries/EnquiryAnswersPanel";
 import UserAvatar from "../../../../components/profile/UserAvatar";
 import { pickUserProfilePhotoUrl } from "../../../../utils/profilePhoto";
 
@@ -88,6 +89,7 @@ export default function EnquiryDetailsDrawer({
   accessToken,
   open,
   onClose,
+  fetchEnquiry,
 }) {
   const [enquiry, setEnquiry] = useState(initialEnquiry);
   const [loading, setLoading] = useState(false);
@@ -105,7 +107,7 @@ export default function EnquiryDetailsDrawer({
       try {
         setLoading(true);
         setError("");
-        const response = await getEnquiryById(accessToken, enquiryId);
+        const response = await (fetchEnquiry || getEnquiryById)(accessToken, enquiryId);
         setEnquiry(unwrapEnquiry(response, initialEnquiry));
       } catch (fetchError) {
         setError(fetchError?.response?.data?.message || "Failed to load enquiry details.");
@@ -116,7 +118,7 @@ export default function EnquiryDetailsDrawer({
     };
 
     load();
-  }, [open, enquiryId, accessToken]);
+  }, [open, enquiryId, accessToken, fetchEnquiry, initialEnquiry]);
 
   if (!open) return null;
 
@@ -131,7 +133,7 @@ export default function EnquiryDetailsDrawer({
         onClick={onClose}
       />
       <aside
-        className={`absolute right-0 top-0 h-full w-full max-w-md overflow-y-auto border-l border-white/15 bg-[#0f2e1a]/98 p-5 backdrop-blur-xl transition-transform duration-300 ease-out md:p-6 ${
+        className={`absolute right-0 top-0 h-full w-full max-w-2xl overflow-y-auto border-l border-white/15 bg-[#0f2e1a]/98 p-5 backdrop-blur-xl transition-transform duration-300 ease-out md:p-6 ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
       >
@@ -207,6 +209,8 @@ export default function EnquiryDetailsDrawer({
                 accentClass="text-white/55"
               />
             </section>
+
+            <EnquiryAnswersPanel enquiry={enquiry} />
           </div>
         ) : (
           <p className="text-sm text-white/70">Enquiry not found.</p>
